@@ -2692,15 +2692,21 @@ document.querySelectorAll('.pair').forEach(pair => {
     });
   });
 });
-const pauseInactiveVideos = () => {
-  document.querySelectorAll('section:not(.bespoke-marp-active) video').forEach(video => video.pause());
+const getActiveSlide = () => document.querySelector('svg.bespoke-marp-active section');
+let activeSlide = getActiveSlide();
+const pauseVideosAfterSlideChange = () => {
+  const nextActiveSlide = getActiveSlide();
+  if (!nextActiveSlide || nextActiveSlide === activeSlide) return;
+
+  document.querySelectorAll('video').forEach(video => {
+    if (!nextActiveSlide.contains(video)) video.pause();
+  });
+  activeSlide = nextActiveSlide;
 };
-new MutationObserver(pauseInactiveVideos).observe(document.body, {
+new MutationObserver(pauseVideosAfterSlideChange).observe(document.body, {
   subtree: true,
   attributes: true,
   attributeFilter: ['class'],
 });
-for (const event of ['hashchange', 'popstate', 'pagehide']) {
-  window.addEventListener(event, () => document.querySelectorAll('video').forEach(video => video.pause()));
-}
+window.addEventListener('pagehide', () => document.querySelectorAll('video').forEach(video => video.pause()));
 </script>

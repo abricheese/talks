@@ -5,7 +5,7 @@
 ## 公開資料
 
 - [花火大会当日にRokidアプリを作ってみた](rokid-fireworks-2026/)
-  - [Smart Glasses Vibeathon Kagoshima 2026｜XR Meetup Kagoshima 3周年記念イベント](https://luma.com/zudko7vk)
+  - 登壇イベント：[Smart Glasses Vibeathon Kagoshima 2026｜XR Meetup Kagoshima 3周年記念イベント](https://luma.com/zudko7vk)
   - 2026年9月6日（日）
 
 ## ローカルでの確認
