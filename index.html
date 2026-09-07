@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>あぶち — Talks</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Hiragino Sans", system-ui, sans-serif; }
+    body { margin: 0; background: #101614; color: #f5f7f3; }
+    main { width: min(960px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
+    h1 { color: #a6ed79; font-size: clamp(42px, 8vw, 72px); margin: 0 0 12px; }
+    .intro { color: #c3cdc5; margin: 0 0 56px; }
+    article { border-top: 3px solid #a6ed79; padding: 28px 0; display: grid; grid-template-columns: 200px 1fr; gap: 28px; }
+    img { width: 200px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; }
+    h2 { margin: 0 0 12px; font-size: 28px; }
+    p { line-height: 1.7; }
+    a { color: inherit; }
+    .open { display: inline-block; color: #101614; background: #a6ed79; padding: 10px 18px; border-radius: 6px; font-weight: 700; text-decoration: none; }
+    @media (max-width: 640px) { article { grid-template-columns: 1fr; } img { width: 100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Talks</h1>
+    <p class="intro">あぶち（@abricheese）の登壇資料とデモ</p>
+    <article>
+      <img src="rokid-fireworks-2026/assets/finale-photo.jpg" alt="花火大会のフィナーレ">
+      <div>
+        <h2>花火大会当日にRokidアプリを作ってみた</h2>
+        <p>Rokid Glasses単体で花火を検出し、オタクくんとギャルがリアルタイムに解説するアプリを作った記録。</p>
+        <p>XR Meetup Kagoshima 第3回 LT／2026年9月</p>
+        <a class="open" href="rokid-fireworks-2026/">スライドを見る</a>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
