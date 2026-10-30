@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LTしたいCodex使いはClaude Codeの世界に足を踏み入れる</title>
+<meta property="og:title" content="LTしたいCodex使いはClaude Codeの世界に足を踏み入れる">
+<meta property="og:image" content="https://abricheese.github.io/talks/claude-meetup/slides/title.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 700 14px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; color: #fff; }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage img, #stage video { max-width: 100%; max-height: 100%; display: block; }
+  .bar { position: fixed; bottom: max(12px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; z-index: 5; }
+  #left { left: 12px; } #right { right: 12px; }
+  .pill { font: inherit; color: #fff; background: #141413; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none; }
+  #follow.on { background: #d97757; }
+  #page { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: 12px; font-weight: 500; font-variant-numeric: tabular-nums; opacity: .7; }
+  #toast { position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); background: #141413; border-radius: 8px; padding: 10px 14px; font-weight: 500; line-height: 1.5; width: min(340px, calc(100vw - 32px)); text-align: center; z-index: 6; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="page"></div>
+<div class="bar" id="left">
+  <a id="save" class="pill">画像を保存</a>
+  <button id="post" class="pill" type="button">Xに投稿</button>
+</div>
+<div class="bar" id="right"><button id="follow" class="pill" type="button"></button></div>
+<div id="toast" role="status" hidden></div>
+<script>
+(function () {
+  const ALL = [{"id": "title", "alt": "LTしたい Codex使いは Claude Codeの世界に 足を踏み入れる"}, {"id": "photoOk", "alt": "撮影・SNS投稿 大歓迎"}, {"id": "sameIdea", "alt": "鮫さんの 登壇スタイルを 真似します"}, {"id": "audienceQr", "alt": "登壇資料を 手元のスマホでも 見られます！ X投稿も可能！"}, {"id": "profile", "alt": "あぶち"}, {"id": "fourWeeks", "alt": "4週連続"}, {"id": "week1", "hidden": true}, {"id": "week2", "alt": ""}, {"id": "week2b", "alt": ""}, {"id": "week3", "alt": ""}, {"id": "week3b", "alt": ""}, {"id": "week4", "hidden": true}, {"id": "finally", "alt": "やっと 終わった"}, {"id": "karakuni", "alt": "明日は 韓国岳"}, {"id": "tokyo", "alt": "明後日は 東京"}, {"id": "busy", "alt": "忙しすぎィ！"}, {"id": "stillLt", "alt": "それでも LTに出たい"}, {"id": "pagemvv6107c", "alt": "なぜなのか！？"}, {"id": "komyusho", "alt": "コミュ障だから！"}, {"id": "mingleHard", "alt": "交流タイムが つらい"}, {"id": "ltMeishi", "alt": "LTは 名刺代わり"}, {"id": "getTalked", "alt": "話しかけて もらえる"}, {"id": "komyushoLt", "alt": "コミュ障ほど LTしよう！！"}, {"id": "soThen", "alt": "というわけで"}, {"id": "meishiIppatsu", "alt": "名刺代わりのLTを ここで一発"}, {"id": "codexAll", "alt": "仕事も 趣味も Codex"}, {"id": "claudeStart", "alt": "Claude Codeを 触ってみた"}, {"id": "atarimaeEarly", "alt": "「当たり前じゃん」と 思った人"}, {"id": "howMade", "alt": "この資料は"}, {"id": "voiceMemo", "alt": "日々の思いつきを Codexにメモ"}, {"id": "handoff", "alt": "Codexが 引き継ぎ書に"}, {"id": "claudeSlides", "alt": "Claudeが スライドに"}, {"id": "spell", "alt": "SpellCastXR"}, {"id": "spellBoard", "alt": "タスクを ボードに"}, {"id": "spellPick", "alt": "1つずつ 拾わせる"}, {"id": "spellSmall", "alt": "人間サイズの タスク"}, {"id": "spellCheck", "alt": "動作確認が 多すぎる"}, {"id": "spell2mo", "alt": "AIを使って 2ヶ月"}, {"id": "tsukafes", "alt": "TSUKAFESで 展示"}, {"id": "day1", "alt": "1日目"}, {"id": "flop", "alt": "思ったより 盛り上がらない"}, {"id": "day2", "alt": "2日目は"}, {"id": "tatsuAgain", "alt": "タツノオトシゴXR"}, {"id": "tatsu", "alt": "2024年 辰年"}, {"id": "tatsu24h", "alt": "大晦日から元旦 24時間展示"}, {"id": "tatsuHand", "alt": "手作業で 1ヶ月"}, {"id": "hot", "alt": "盛り上がった"}, {"id": "grow", "alt": "もっと 育てたい"}, {"id": "nextDay", "alt": "展示が 終わった翌日"}, {"id": "standalone", "alt": "スタンドアロンに したい"}, {"id": "ueWater", "alt": "UEだと 水が描けない"}, {"id": "toUnity", "alt": "Codexと相談して Unityへ"}, {"id": "goal", "alt": "ゴールだけ 伝える"}, {"id": "hours13", "alt": "約13時間"}, {"id": "check5", "alt": "動作確認は 5回くらい"}, {"id": "easy", "alt": "あっさり できた"}, {"id": "ai100", "alt": "コードは 100% AI製"}, {"id": "handcodeOver", "alt": "手でコードを書く 時代は 終わった"}, {"id": "noHumanSteps", "alt": "人の手順を なぞらなくていい"}, {"id": "noWall", "alt": "作ることは もう壁じゃない"}, {"id": "humanRole", "alt": "じゃあ 人は何をする？"}, {"id": "ideaFirst", "alt": "最初のアイデアが 肝心"}, {"id": "notCan", "alt": "何ができるか より"}, {"id": "whatMake", "alt": "何を 作りたいか"}, {"id": "creator", "alt": "どんな作品を 作るか"}, {"id": "artist", "alt": "全人類 アーティスト？"}, {"id": "tokyoShop", "alt": "東京なら 家電量販店で 体験できる"}, {"id": "kagoNone", "alt": "鹿児島には 体験できる場が ない"}, {"id": "fewMeet", "alt": "出会う きっかけが 少ない"}, {"id": "fewLearn", "alt": "学ぶ機会も 少ない"}, {"id": "soCommunity", "alt": "だから コミュニティ"}, {"id": "event", "alt": "体験会"}, {"id": "exhibit", "alt": "展示"}, {"id": "knowXr", "alt": "XRを 知ってもらう"}, {"id": "study", "alt": "勉強会で 学ぶ"}, {"id": "make", "alt": "作る"}, {"id": "show", "alt": "作ったものを 展示する"}, {"id": "newPeople", "alt": "また誰かが 体験する"}, {"id": "loop", "alt": "体験と学びの ループ"}, {"id": "loopKago", "alt": "このループを 鹿児島に"}, {"id": "xrm", "alt": "XR Meetup Kagoshima"}, {"id": "okQ", "alt": "Claude初心者でも 登壇して 大丈夫？"}, {"id": "ok", "alt": "触り始めでも 話していい"}, {"id": "atarimae", "alt": "「当たり前じゃん」と 思った人"}, {"id": "canTalk", "alt": "もう 登壇できます"}, {"id": "yourTurn", "alt": "次は あなたの番"}, {"id": "thanks", "alt": "ありがとう ございました"}];
+  const TOPIC = "abchee-lt-4d766b75dfda80be", BASE = "https://abricheese.github.io/talks/claude-meetup/", TITLE = "LTしたいCodex使いはClaude Codeの世界に足を踏み入れる", HASHTAG = "#ClaudeCommunityKagoshima";
+  const slides = ALL.filter(s => !s.hidden);
+  const $ = id => document.getElementById(id);
+  let index = 0, following = false, liveId = null, toastTimer = null;
+
+  function toast(text) {
+    $("toast").textContent = text;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $("toast").hidden = true; }, 5000);
+  }
+  function render() {
+    const slide = slides[index];
+    const stage = $("stage");
+    stage.textContent = "";
+    const media = document.createElement(slide.video ? "video" : "img");
+    media.src = slide.video || "slides/" + slide.id + ".jpg";
+    if (slide.video) { media.muted = true; media.loop = true; media.autoplay = true; media.playsInline = true; media.poster = "slides/" + slide.id + ".jpg"; }
+    else media.alt = slide.alt || "";
+    stage.appendChild(media);
+    $("page").textContent = (index + 1) + " / " + slides.length;
+    $("save").href = "slides/" + slide.id + ".jpg";
+    $("save").download = "claude-meetup-lt-" + slide.id + ".jpg";
+    // 次のページを先に読み込み、めくりを待たせない。
+    const next = slides[index + 1];
+    if (next) new Image().src = "slides/" + next.id + ".jpg";
+    if (!following) history.replaceState(null, "", "#" + slide.id);
+  }
+  function go(i) { index = Math.max(0, Math.min(slides.length - 1, i)); render(); }
+  // 非公開の写真待ちページのときは、直前の見せられるページへ合わせる。
+  function goLive(id) {
+    let at = ALL.findIndex(s => s.id === id);
+    while (at > 0 && ALL[at].hidden) at--;
+    const target = slides.findIndex(s => s.id === ALL[Math.max(at, 0)].id);
+    if (target >= 0) go(target);
+  }
+  function setFollowing(on) {
+    following = on;
+    $("follow").classList.toggle("on", on);
+    $("follow").textContent = on ? "発表に追従中" : "発表に戻る";
+    if (on && liveId) goLive(liveId);
+  }
+  function manual(i) { setFollowing(false); go(i); }
+
+  $("follow").onclick = event => { event.stopPropagation(); setFollowing(!following); };
+  $("stage").onclick = event => manual(index + (event.clientX < innerWidth * 0.3 ? -1 : 1));
+  addEventListener("keydown", event => {
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) { event.preventDefault(); manual(index + 1); }
+    if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) { event.preventDefault(); manual(index - 1); }
+  });
+  let touchX = null;
+  $("stage").addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+  $("stage").addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { e.preventDefault(); manual(index + (dx < 0 ? 1 : -1)); }
+  });
+
+  $("post").onclick = async () => {
+    const slide = slides[index];
+    const text = TITLE + " " + HASHTAG;
+    const pageUrl = BASE + "s/" + slide.id + ".html";
+    // スマホは共有シートから画像付きで渡す。
+    if (navigator.canShare) {
+      try {
+        const blob = await (await fetch("slides/" + slide.id + ".jpg")).blob();
+        const file = new File([blob], "claude-meetup-lt-" + slide.id + ".jpg", { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text });
+          return;
+        }
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+      }
+    }
+    // PCはスライドごとのURLを入れ、Xのカードで画像を見せる。
+    open("https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(pageUrl), "_blank", "noopener");
+    toast("スライド画像はXのカードとして表示されます。投稿前に出ないことがあります。");
+  };
+
+  // ページ番号だけを公開の通知サービスで受け取る。止まっても自由にめくる機能は動く。
+  function onLive(id) {
+    if (id === "__end") { liveId = null; return; }
+    liveId = id;
+    if (following) goLive(id);
+  }
+  async function connectLive() {
+    try {
+      const response = await fetch("https://ntfy.sh/" + TOPIC + "/json?poll=1&since=30m");
+      const lines = (await response.text()).trim().split("\n").filter(Boolean);
+      if (lines.length) onLive(JSON.parse(lines[lines.length - 1]).message);
+    } catch (_) { /* 最新のページが取れなくても続ける */ }
+    const source = new EventSource("https://ntfy.sh/" + TOPIC + "/sse");
+    source.onmessage = event => {
+      try { onLive(JSON.parse(event.data).message); } catch (_) {}
+    };
+  }
+
+  const hash = location.hash.slice(1);
+  const start = slides.findIndex(s => s.id === hash);
+  go(start >= 0 ? start : 0);
+  // 特定のページのリンクから来た人は、そのページを見せる。それ以外は発表に追従する。
+  setFollowing(start < 0);
+  connectLive();
+})();
+</script>
+</body>
+</html>
