@@ -14,7 +14,6 @@
   .bar { position: fixed; bottom: max(12px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; z-index: 5; }
   #left { left: 12px; } #right { right: 12px; }
   .pill { font: inherit; color: #fff; background: #141413; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none; }
-  #follow.on { background: #d97757; }
   #page { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: 12px; font-weight: 500; font-variant-numeric: tabular-nums; opacity: .7; }
   #toast { position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); background: #141413; border-radius: 8px; padding: 10px 14px; font-weight: 500; line-height: 1.5; width: min(340px, calc(100vw - 32px)); text-align: center; z-index: 6; }
   [hidden] { display: none !important; }
@@ -27,15 +26,14 @@
   <a id="save" class="pill">画像を保存</a>
   <button id="post" class="pill" type="button">Xに投稿</button>
 </div>
-<div class="bar" id="right"><button id="follow" class="pill" type="button"></button></div>
 <div id="toast" role="status" hidden></div>
 <script>
 (function () {
   const ALL = [{"id": "title", "alt": "LTしたい Codex使いは Claude Codeの世界に 足を踏み入れる"}, {"id": "photoOk", "alt": "撮影・SNS投稿 大歓迎"}, {"id": "sameIdea", "alt": "鮫さんの 登壇スタイルを 真似してみる"}, {"id": "audienceQr", "alt": "このスライドを 手元のスマホでも 見れる！！ X投稿もできる！"}, {"id": "profile", "alt": "あぶち"}, {"id": "fourWeeks", "alt": "4週連続"}, {"id": "week1", "alt": "1週目： XRコンテンツを作ってみる会"}, {"id": "week1b", "alt": "1週目： XRコンテンツを作ってみる会"}, {"id": "pagemvv8d4pn", "alt": "2週目： さくらじまハウス2026 運営/登壇"}, {"id": "week2b", "alt": "3週目： CUG BIM/CIM勉強会 登壇"}, {"id": "week2", "alt": "3週目： CUG BIM/CIM勉強会 登壇"}, {"id": "week3b", "alt": "3週目： TSUKAFES ブース出展"}, {"id": "week3", "alt": "3週目： TSUKAFES ブース出展"}, {"id": "week4", "alt": "4週目： Kagoshima | Claude Meetup"}, {"id": "finally", "alt": "やっと終わった"}, {"id": "karakuni", "alt": "明日は霧島登山"}, {"id": "tokyo", "alt": "明後日は東京 Unreal Fest"}, {"id": "busy", "alt": "忙しスギィ！"}, {"id": "stillLt", "alt": "それでも LTに出たい"}, {"id": "pagemvv6107c", "alt": "なぜなのか！？"}, {"id": "komyusho", "alt": "コミュ障だから！"}, {"id": "mingleHard", "alt": "交流タイムがつらい"}, {"id": "ltMeishi", "alt": "LTは名刺代わり"}, {"id": "getTalked", "alt": "話しかけてもらえる"}, {"id": "komyushoLt", "alt": "コミュ障ほど LTしよう！！"}, {"id": "codexAll", "alt": "普段は 仕事も趣味もCodex"}, {"id": "claudeStart", "alt": "LTに出たくて Claude Codeを触ってみた"}, {"id": "appScreens", "alt": "グラスにも、みんなのスマホにも スライドを表示"}, {"id": "ideaFirst", "alt": "私も やってみたかった"}, {"id": "whatMake", "alt": "何ができるかより 何を作りたいか"}, {"id": "creator", "alt": "「自分もやってみたい」 そのきっかけを、鹿児島にも"}, {"id": "xrmLogo", "alt": ""}, {"id": "event", "alt": "鹿児島で XRに触れる場をつくる"}, {"id": "loop", "alt": "体験した人が 次は作る側になる"}, {"id": "ok", "alt": "「ちょっと触ってみた」も LTの話になる"}, {"id": "okQ", "alt": "LTしたくてClaudeを触り始めた 初心者のLTだったけど"}, {"id": "atarimae", "alt": "今日の話、簡単すぎた？"}, {"id": "yourTurn", "alt": "それなら、次は 登壇する側で"}, {"id": "thanks", "alt": "ご清聴ありがとうございました"}];
-  const TOPIC = "abchee-lt-4d766b75dfda80be", BASE = "https://abricheese.github.io/talks/claude-meetup/", TITLE = "LTしたいCodex使いはClaude Codeの世界に足を踏み入れる", HASHTAG = "#claudecommunity #ClaudeCommunityKagoshima";
+  const BASE = "https://abricheese.github.io/talks/claude-meetup/", TITLE = "LTしたいCodex使いはClaude Codeの世界に足を踏み入れる", HASHTAG = "#claudecommunity #ClaudeCommunityKagoshima";
   const slides = ALL.filter(s => !s.hidden);
   const $ = id => document.getElementById(id);
-  let index = 0, following = false, liveId = null, toastTimer = null;
+  let index = 0, toastTimer = null;
 
   function toast(text) {
     $("toast").textContent = text;
@@ -58,25 +56,11 @@
     // 次のページを先に読み込み、めくりを待たせない。
     const next = slides[index + 1];
     if (next) new Image().src = "slides/" + next.id + ".jpg";
-    if (!following) history.replaceState(null, "", "#" + slide.id);
+    history.replaceState(null, "", "#" + slide.id);
   }
   function go(i) { index = Math.max(0, Math.min(slides.length - 1, i)); render(); }
-  // 非公開の写真待ちページのときは、直前の見せられるページへ合わせる。
-  function goLive(id) {
-    let at = ALL.findIndex(s => s.id === id);
-    while (at > 0 && ALL[at].hidden) at--;
-    const target = slides.findIndex(s => s.id === ALL[Math.max(at, 0)].id);
-    if (target >= 0) go(target);
-  }
-  function setFollowing(on) {
-    following = on;
-    $("follow").classList.toggle("on", on);
-    $("follow").textContent = on ? "発表に追従中" : "発表に戻る";
-    if (on && liveId) goLive(liveId);
-  }
-  function manual(i) { setFollowing(false); go(i); }
+  function manual(i) { go(i); }
 
-  $("follow").onclick = event => { event.stopPropagation(); setFollowing(!following); };
   $("stage").onclick = event => manual(index + (event.clientX < innerWidth * 0.3 ? -1 : 1));
   addEventListener("keydown", event => {
     if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) { event.preventDefault(); manual(index + 1); }
@@ -111,30 +95,9 @@
     toast("スライド画像はXのカードとして表示されます。投稿前に出ないことがあります。");
   };
 
-  // ページ番号だけを公開の通知サービスで受け取る。止まっても自由にめくる機能は動く。
-  function onLive(id) {
-    if (id === "__end") { liveId = null; return; }
-    liveId = id;
-    if (following) goLive(id);
-  }
-  async function connectLive() {
-    try {
-      const response = await fetch("https://ntfy.sh/" + TOPIC + "/json?poll=1&since=30m");
-      const lines = (await response.text()).trim().split("\n").filter(Boolean);
-      if (lines.length) onLive(JSON.parse(lines[lines.length - 1]).message);
-    } catch (_) { /* 最新のページが取れなくても続ける */ }
-    const source = new EventSource("https://ntfy.sh/" + TOPIC + "/sse");
-    source.onmessage = event => {
-      try { onLive(JSON.parse(event.data).message); } catch (_) {}
-    };
-  }
-
   const hash = location.hash.slice(1);
   const start = slides.findIndex(s => s.id === hash);
   go(start >= 0 ? start : 0);
-  // 特定のページのリンクから来た人は、そのページを見せる。それ以外は発表に追従する。
-  setFollowing(start < 0);
-  connectLive();
 })();
 </script>
 </body>
