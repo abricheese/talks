@@ -4,6 +4,7 @@
 
 ## 公開資料
 
+- [明日のお出かけに合わせてスマートグラスのアプリを作ってみてる話](xr-meeting-20261118/)（XR Meeting、2026年11月18日）
 - [花火大会当日にRokidアプリを作ってみた](rokid-fireworks-2026/)
   - 登壇イベント：[Smart Glasses Vibeathon Kagoshima 2026｜XR Meetup Kagoshima 3周年記念イベント](https://luma.com/zudko7vk)
   - 2026年9月6日（日）
