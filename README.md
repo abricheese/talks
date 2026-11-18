@@ -7,6 +7,9 @@
 - [明日のお出かけに合わせてスマートグラスのアプリを作ってみてる話](xr-meeting-20261118/)
   - 登壇イベント：[XRミーティング 2026/11/18 #XRMTG](https://connpass.com/event/410986/)
   - 2026年11月18日（水）
+- [LTしたいCodex使いはClaude Codeの世界に足を踏み入れる](claude-meetup/)
+  - 登壇イベント：[Kagoshima | Claude Meetup](https://luma.com/claude-nxc9)
+  - 2026年10月31日（土）
 - [花火大会当日にRokidアプリを作ってみた](rokid-fireworks-2026/)
   - 登壇イベント：[Smart Glasses Vibeathon Kagoshima 2026｜XR Meetup Kagoshima 3周年記念イベント](https://luma.com/zudko7vk)
   - 2026年9月6日（日）
