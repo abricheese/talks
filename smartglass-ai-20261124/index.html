@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スマートグラス×AIでいろいろ作ってる話</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; outline: none; }
+  #ar {
+    position: fixed; right: 18px; bottom: 18px; display: none;
+    padding: 12px 20px; border: 0; border-radius: 6px;
+    background: #a6ed79; color: #101614; font: 700 17px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; cursor: pointer;
+  }
+  /* ---- audience page ---- */
+  body.aud { background: #101614; color: #f5f7f3; overflow: auto; font: 700 14px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  body.aud canvas, body.aud #ar { display: none !important; }
+  #aud { --bar: 58px; }
+  #frameWrap { height: 100vh; height: 100dvh; box-sizing: border-box; padding-bottom: var(--bar); display: grid; place-items: center; }
+  #frame { position: relative; width: min(100vw, calc((100vh - var(--bar)) * 16 / 9)); width: min(100dvw, calc((100dvh - var(--bar)) * 16 / 9)); aspect-ratio: 16 / 9; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+  #slideImg { display: block; width: 100%; height: 100%; }
+  .clip { position: absolute; overflow: hidden; background: #000; }
+  .clip video { display: block; width: 100%; height: 100%; object-fit: contain; }
+  #tall, #grid { display: none; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 12px; background: rgba(16, 22, 20, .94); z-index: 5; }
+  .pill { font: inherit; color: #fff; background: #141413; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+  .pill:disabled { opacity: .36; cursor: default; }
+  #followButton[aria-pressed="true"] { background: #a6ed79; border-color: #a6ed79; color: #101614; }
+  #aPage { min-width: 58px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; color: #c3cdc5; }
+  #followNote { position: fixed; right: 12px; bottom: calc(var(--bar) + 10px); max-width: 290px; background: #141413; border: 1px solid #4c4c4c; border-radius: 8px; padding: 10px 12px; font-weight: 500; line-height: 1.5; z-index: 6; }
+  #followNote a { color: #a6ed79; font-weight: 700; }
+  #zoom { position: fixed; inset: 0; z-index: 10; background: #000; overflow: auto; -webkit-overflow-scrolling: touch; }
+  #zoom img { display: block; height: 100vh; height: 100dvh; width: auto; max-width: none; }
+  [hidden] { display: none !important; }
+  @media (max-aspect-ratio: 1/1) {
+    #frameWrap { height: auto; padding: 0; display: block; }
+    #frame { width: 100vw; }
+    #clips { display: none; }
+    #tall { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+    #tall video { display: block; width: 100%; max-height: 72vh; max-height: 72dvh; background: #000; }
+    #grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 14px 6px calc(var(--bar) + 16px); }
+    #grid button { display: block; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; }
+    #grid button[aria-current="true"] { border-color: #a6ed79; }
+    #grid img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  }
+  #note {
+    position: fixed; left: 0; right: 0; top: 45%; text-align: center; display: none;
+    color: #c3cdc5; font: 16px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<button id="ar" type="button">ARで開く</button>
+<p id="note"></p>
+<div id="aud" hidden>
+  <div id="frameWrap"><div id="frame"><img id="slideImg" alt="" draggable="false"><div id="clips"></div></div></div>
+  <div id="tall"></div>
+  <div id="grid"></div>
+  <nav id="bar" aria-label="スライド操作">
+    <button class="pill" id="aPrev" type="button" aria-label="前のスライド">‹</button>
+    <span id="aPage" role="status"></span>
+    <button class="pill" id="aNext" type="button" aria-label="次のスライド">›</button>
+    <button class="pill" id="followButton" type="button" aria-pressed="false">発表者に追従</button>
+  </nav>
+  <div id="followNote" role="status" hidden></div>
+  <div id="zoom" hidden><img id="zoomImg" alt=""></div>
+</div>
+<script>
+"use strict";
+const SLIDES = [{"src": "deck/slides/f1.jpg", "movies": []}, {"src": "deck/slides/f7.jpg", "movies": [{"src": "deck/media/fw-otaku.mp4", "l": 0.148828, "t": 0.192209, "w": 0.333984, "h": 0.791667}, {"src": "deck/media/fw-otaku-debug.mp4", "l": 0.517188, "t": 0.192209, "w": 0.333984, "h": 0.791667}]}, {"src": "deck/slides/06.jpg", "movies": []}, {"src": "deck/slides/07.jpg", "movies": [{"src": "deck/media/claude-meetup.mp4", "l": 0.667969, "t": 0.079167, "w": 0.267188, "h": 0.844444}]}, {"src": "deck/slides/08.jpg", "movies": []}, {"src": "deck/slides/09.jpg", "movies": [{"src": "deck/media/unreal-rokid.mp4", "l": 0.060937, "t": 0.211111, "w": 0.189844, "h": 0.6}, {"src": "deck/media/unreal-mac.mp4", "l": 0.363281, "t": 0.211111, "w": 0.567969, "h": 0.6}]}, {"src": "deck/slides/10.jpg", "movies": []}, {"src": "deck/slides/11.jpg", "movies": []}, {"src": "deck/slides/12.jpg", "movies": [{"src": "deck/media/wired-iphone.mp4", "l": 0.420312, "t": 0.134722, "w": 0.253125, "h": 0.8}, {"src": "deck/media/wired-mac.mp4", "l": 0.699219, "t": 0.134722, "w": 0.253125, "h": 0.8}]}, {"src": "deck/slides/13.jpg", "movies": []}, {"src": "deck/slides/14.jpg", "movies": []}, {"src": "deck/slides/15.jpg", "movies": [{"src": "deck/media/hike-week-two.mp4", "l": 0.704688, "t": 0.236111, "w": 0.253125, "h": 0.6}]}, {"src": "deck/slides/16.jpg", "movies": [{"src": "deck/media/shiratori.mp4", "l": 0.691406, "t": 0.177778, "w": 0.2375, "h": 0.75}]}];
+const COVER = "deck/cover.jpg";
+
+// ---------------------------------------------------------------- shared: who is viewing, and the live position
+const claudeApi = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+const dbReady = claudeApi ? claudeApi.use("db").catch(() => null) : Promise.resolve(null);
+const userReady = claudeApi ? claudeApi.use("user").catch(() => null) : Promise.resolve(null);
+const LIVE = "live/current";
+// サインインなしで見られる場所（GitHub Pages）では、以前と同じ公開の通知サービスで現在ページを配る。送るのはページ番号だけ。
+const NTFY = claudeApi ? null : (window.__NTFY || "https://ntfy.sh/abchee-lt-a38fb24e43b8a2cb");
+const KEY_HASH = "57f9aa21a7adb921928748db2187b24b0c42d89ba01957999583a5db85798e7e";
+let broadcastKeyOk = false;
+async function checkBroadcastKey(hash) {
+  const key = hash.split("-").slice(1).join("-");
+  if (!key || !window.crypto || !crypto.subtle) return false;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("") === KEY_HASH;
+}
+
+// presenter side: one write at a time, always the newest position
+const live = { db: null, busy: false, want: null, sent: null };
+dbReady.then(db => { live.db = db; pumpLive(); });
+function publishLive(k) { live.want = k; pumpLive(); }
+async function pumpLive() {
+  if (live.busy || document.body.classList.contains("aud")) return;
+  if (!live.db && !(NTFY && broadcastKeyOk)) return;
+  live.busy = true;
+  while (live.want !== null && live.want !== live.sent) {
+    const v = live.want;
+    try {
+      if (live.db) await live.db.doc(LIVE).set({ k: v });
+      else { const r = await fetch(NTFY, { method: "POST", body: String(v) }); if (!r.ok) throw new Error("status " + r.status); }
+      live.sent = v;
+    } catch (e) {
+      console.warn("live position not sent", e && (e.code || e.message));
+      setTimeout(pumpLive, 2000); break;
+    }
+  }
+  live.busy = false;
+}
+
+// ---------------------------------------------------------------- audience page
+function startAudience() {
+  document.body.classList.add("aud");
+  const $ = id => document.getElementById(id);
+  $("aud").hidden = false;
+  const pages = [{ src: COVER, movies: [] }, ...SLIDES];
+  const portrait = window.matchMedia("(max-aspect-ratio: 1/1)");
+  let index = 0, following = false, latest = null, subscribed = false;
+
+  function render() {
+    const page = pages[index];
+    $("slideImg").src = page.src;
+    $("aPage").textContent = (index + 1) + " / " + pages.length;
+    $("aPrev").disabled = index === 0; $("aNext").disabled = index === pages.length - 1;
+    for (const box of [$("clips"), $("tall")]) { box.querySelectorAll("video").forEach(v => v.pause()); box.textContent = ""; }
+    for (const m of page.movies) {
+      const v = document.createElement("video");
+      v.controls = true; v.loop = true; v.muted = true; v.playsInline = true; v.preload = "auto";
+      v.setAttribute("playsinline", ""); v.setAttribute("controlslist", "nofullscreen"); v.disablePictureInPicture = true;
+      v.src = m.src;
+      if (portrait.matches) $("tall").appendChild(v);
+      else {
+        const clip = document.createElement("div"); clip.className = "clip";
+        clip.style.cssText = `left:${m.l * 100}%;top:${m.t * 100}%;width:${m.w * 100}%;height:${m.h * 100}%`;
+        clip.appendChild(v); $("clips").appendChild(clip);
+      }
+      v.play().catch(() => {});
+    }
+    $("grid").querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-current", String(i === index)));
+    const nextPage = pages[index + 1]; if (nextPage) new Image().src = nextPage.src;
+  }
+  function show(i) {
+    i = Math.max(0, Math.min(pages.length - 1, i));
+    if (i === index && $("slideImg").src) return;
+    index = i; render();
+    if (portrait.matches) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  const fromLive = k => Math.max(0, Math.min(pages.length - 1, k));
+
+  pages.forEach((page, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", (i + 1) + "枚目");
+    const img = document.createElement("img"); img.loading = "lazy"; img.alt = ""; img.src = page.src;
+    b.appendChild(img); b.addEventListener("click", () => manual(i)); $("grid").appendChild(b);
+  });
+  portrait.addEventListener("change", render);
+
+  // ---- following the presenter
+  const button = $("followButton"), note = $("followNote");
+  function setFollowing(on) {
+    following = on;
+    button.setAttribute("aria-pressed", String(on));
+    button.textContent = on ? "追従中（押すと解除）" : "発表者に追従";
+    if (on && latest !== null) show(fromLive(latest));
+  }
+  function showNote(build) { note.textContent = ""; build(note); note.hidden = false; }
+  function subscribe(db) {
+    if (subscribed) return; subscribed = true;
+    db.doc(LIVE).onSnapshot(snapshot => {
+      if (!snapshot.exists) return;
+      const k = Number(snapshot.data().k);
+      if (!Number.isFinite(k)) return;
+      latest = k;
+      if (following) show(fromLive(latest));
+    }, () => {
+      subscribed = false; setFollowing(false);
+      showNote(box => box.append("追従が止まりました。もう一度押してください。"));
+    });
+  }
+  // サインイン不要の経路。開いた時点の最新ページを1回だけ取りにいき、あとは流れてくる通知に合わせる。
+  let liveTime = 0;
+  function subscribeNtfy() {
+    if (subscribed) return; subscribed = true;
+    const apply = m => {
+      if (!m || m.event !== "message" || !(m.time >= liveTime)) return;
+      const k = Number(m.message);
+      if (!Number.isFinite(k)) return;
+      liveTime = m.time; latest = k;
+      if (following) show(fromLive(latest));
+    };
+    fetch(NTFY + "/json?poll=1&since=latest").then(r => r.text()).then(text => {
+      const lines = text.trim().split("\n").filter(Boolean);
+      if (!lines.length) return;
+      const m = JSON.parse(lines[lines.length - 1]);
+      if (Date.now() / 1000 - m.time < 1800) apply(m);        // 30分より前の位置は、終わった登壇のものとして使わない
+    }).catch(() => {});
+    const source = new EventSource(NTFY + "/sse");
+    source.onmessage = e => { try { apply(JSON.parse(e.data)); } catch (err) {} };
+  }
+  // 自分でめくったら追従を外して、自由に見られるようにする。
+  function manual(i) { setFollowing(false); note.hidden = true; show(i); }
+  button.addEventListener("click", async () => {
+    if (following) { setFollowing(false); return; }
+    if (NTFY) { note.hidden = true; subscribeNtfy(); setFollowing(true); return; }
+    button.textContent = "接続中…";
+    const db = await dbReady;
+    if (!db) {
+      button.textContent = "発表者に追従";
+      showNote(box => {
+        box.append("追従するにはClaudeへのログインが必要です。");
+        const link = document.createElement("a");
+        link.href = "https://claude.ai/login"; link.target = "_blank"; link.rel = "noopener"; link.textContent = "ログインする";
+        box.append(document.createElement("br"), link, "（ログイン後にこのページを開き直してください）");
+      });
+      return;
+    }
+    note.hidden = true; subscribe(db); setFollowing(true);
+  });
+  // QRから開いた人は、つながり次第そのまま追従を始める。
+  if (NTFY) { subscribeNtfy(); setFollowing(true); }
+  else dbReady.then(db => { if (db && !following && index === 0) { subscribe(db); setFollowing(true); } });
+
+  // ---- turning pages by hand
+  $("aPrev").addEventListener("click", () => manual(index - 1));
+  $("aNext").addEventListener("click", () => manual(index + 1));
+  addEventListener("keydown", e => {
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) { e.preventDefault(); manual(index + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); manual(index - 1); }
+  });
+  let touch = null;
+  $("frame").addEventListener("touchstart", e => { touch = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, { passive: true });
+  $("frame").addEventListener("touchend", e => {
+    if (!touch) return;
+    const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y; touch = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { e.preventDefault(); manual(index + (dx < 0 ? 1 : -1)); }
+  });
+  $("frame").addEventListener("click", e => {
+    if (e.target.closest(".clip")) return;
+    if (portrait.matches) { $("zoomImg").src = pages[index].src; $("zoom").hidden = false; $("zoom").scrollLeft = 0; return; }
+    const r = $("frame").getBoundingClientRect();
+    manual(index + (e.clientX - r.left < r.width * 0.3 ? -1 : 1));
+  });
+  $("zoom").addEventListener("click", () => { $("zoom").hidden = true; });
+
+  render();
+}
+
+// ---------------------------------------------------------------- presenter page (the 3D route)
+function startStage() {
+
+const TITLE = ["スマートグラス×AIで", "いろいろ作ってる話"];
+const BYLINE = "あぶち　@abricheese";
+const TALK_SECONDS = 300;
+
+// ---------------------------------------------------------------- math
+const M = {
+  ident: () => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+  mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++)
+      o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+    return o;
+  },
+  trans(x, y, z) { const o = M.ident(); o[12] = x; o[13] = y; o[14] = z; return o; },
+  scale(x, y, z) { const o = M.ident(); o[0] = x; o[5] = y; o[10] = z; return o; },
+  rotY(a) { const o = M.ident(), c = Math.cos(a), s = Math.sin(a); o[0] = c; o[2] = -s; o[8] = s; o[10] = c; return o; },
+  rotX(a) { const o = M.ident(), c = Math.cos(a), s = Math.sin(a); o[5] = c; o[6] = s; o[9] = -s; o[10] = c; return o; },
+  persp(fovY, aspect, n, f) {
+    const t = 1 / Math.tan(fovY / 2), o = new Float32Array(16);
+    o[0] = t / aspect; o[5] = t; o[10] = (f + n) / (n - f); o[11] = -1; o[14] = 2 * f * n / (n - f);
+    return o;
+  }
+};
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerp3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const ease = t => t * t * t * (t * (t * 6 - 15) + 10);
+let seed = 7;
+const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+// ---------------------------------------------------------------- world layout
+// The route runs away from the viewer (-z): fireworks night, the talk venue, Tokyo, the flight, the mountain.
+const W = 1.6, H = 0.9, EYE = 1.5, VIEW_D = 1.7;
+const MT = { x: 0, z: -104, h: 20, r: 17 };
+function ground(x, z) {
+  const d2 = (x - MT.x) ** 2 + (z - MT.z) ** 2;
+  let h = MT.h * Math.exp(-d2 / (2 * MT.r * MT.r));
+  h += 7 * Math.exp(-((x - 17) ** 2 + (z + 90) ** 2) / 162);
+  h += 5.5 * Math.exp(-((x + 19) ** 2 + (z + 120) ** 2) / 200);
+  const n = Math.sin(x * 0.35 + 1.3) * Math.cos(z * 0.31) + 0.5 * Math.sin(x * 0.8 - z * 0.6);
+  h += n * 0.9 * Math.min(1, h / 6);
+  return h < 0.08 ? 0 : h;
+}
+//            x     z     altitude (sky boards only)
+const SPOTS = [[0, 0], [3.5, -6.5], [-2, -15], [2.5, -21.5], [-3, -31], [1, -37.5], [5, -44],
+               [0, -56, 9], [-5, -64, 10.5], [-3, -78], [4, -87], [-4, -95], [0.5, -103]];
+const boards = SPOTS.map((s, i) => {
+  const sky = s.length > 2, base = sky ? s[2] : ground(s[0], s[1]);
+  return { c: [s[0], base + EYE, s[1]], base, sky };
+});
+boards.forEach((b, i) => {
+  let nx = 0, nz = 1;
+  if (i > 0) { const p = boards[i - 1].c; nx = p[0] - b.c[0]; nz = p[2] - b.c[2]; const l = Math.hypot(nx, nz); nx /= l; nz /= l; }
+  b.n = [nx, 0, nz]; b.yaw = Math.atan2(nx, nz);
+  b.model = M.mul(M.trans(b.c[0], b.c[1], b.c[2]), M.rotY(b.yaw));
+});
+
+// poses: [overview+title, stop 0..N-1, overview]
+const OVER = { p: [0, 0, -60], yaw: Math.PI / 2, ls: Math.log(0.0128), o: [0.02, -0.33, -1.5], ox: [0, -0.42, -0.95], pitch: 0.36, stop: -1 };
+const poses = [OVER, ...boards.map((b, i) => ({
+  p: [b.c[0] + b.n[0] * VIEW_D, b.c[1], b.c[2] + b.n[2] * VIEW_D], yaw: b.yaw, ls: 0, o: [0, 0, 0], ox: [0, 0, 0], pitch: 0, stop: i
+})), OVER];
+
+function blend(a, b, tt) {
+  const t = ease(tt), q = {};
+  q.o = lerp3(a.o, b.o, t); q.ox = lerp3(a.ox, b.ox, t); q.pitch = lerp(a.pitch, b.pitch, t);
+  q.ls = lerp(a.ls, b.ls, t);
+  let dy = b.yaw - a.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI;
+  q.yaw = a.yaw + dy * t;
+  q.p = lerp3(a.p, b.p, t);
+  if (a.stop >= 0 && b.stop >= 0) {            // a hop between two boards: rise, pull back, look down a little
+    const dist = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]), arc = Math.sin(Math.PI * t);
+    const back = arc * Math.min(5, 0.2 * dist);
+    q.p[0] += Math.sin(q.yaw) * back; q.p[2] += Math.cos(q.yaw) * back;
+    q.p[1] += arc * Math.min(5, 0.2 * dist);
+    q.pitch += arc * Math.min(0.26, 0.016 * dist);
+  }
+  return q;
+}
+function poseMatrix(q, xr) {
+  const s = Math.exp(q.ls), o = xr ? q.ox : q.o;
+  let m = M.mul(M.rotY(-q.yaw), M.trans(-q.p[0], -q.p[1], -q.p[2]));
+  m = M.mul(M.scale(s, s, s), m);
+  if (!xr) m = M.mul(M.rotX(q.pitch), m);
+  return M.mul(M.trans(o[0], o[1], o[2]), m);
+}
+
+// ---------------------------------------------------------------- GL
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl2", { xrCompatible: true, alpha: true, antialias: true, premultipliedAlpha: true });
+const note = document.getElementById("note");
+if (!gl) { note.style.display = "block"; note.textContent = "このブラウザではWebGL2が使えません"; throw new Error("no webgl2"); }
+
+function program(vs, fs, attribs) {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    gl.attachShader(p, s);
+  }
+  attribs.forEach((a, i) => gl.bindAttribLocation(p, i, a));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+const texProg = program(`#version 300 es
+in vec3 aPos; in vec2 aUv; uniform mat4 uMvp; out vec2 vUv;
+void main(){ vUv = aUv; gl_Position = uMvp * vec4(aPos, 1.0); }`, `#version 300 es
+precision mediump float;
+in vec2 vUv; uniform sampler2D uTex; uniform vec4 uColor; out vec4 o;
+void main(){ o = texture(uTex, vUv) * uColor; }`, ["aPos", "aUv"]);
+const tU = { mvp: gl.getUniformLocation(texProg, "uMvp"), color: gl.getUniformLocation(texProg, "uColor") };
+
+// screen-space thick lines: each segment is a quad expanded in the vertex shader
+const lineProg = program(`#version 300 es
+in vec3 aA; in vec3 aB; in vec2 aES; in vec4 aCol;
+uniform mat4 uMvp; uniform vec2 uHalf; uniform float uWidth; uniform float uScale;
+out vec4 vCol;
+void main(){
+  vec4 a = uMvp * vec4(aA, 1.0), b = uMvp * vec4(aB, 1.0);
+  float n = 0.02;
+  if (a.w < n && b.w < n) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vCol = vec4(0.0); return; }
+  if (a.w < n) a = mix(a, b, (n - a.w) / (b.w - a.w));
+  else if (b.w < n) b = mix(b, a, (n - b.w) / (a.w - b.w));
+  vec2 d = (b.xy / b.w - a.xy / a.w) * uHalf;
+  float len = length(d); d = len > 1e-5 ? d / len : vec2(1.0, 0.0);
+  vec4 p = mix(a, b, aES.x);
+  p.xy += vec2(-d.y, d.x) * aES.y * uWidth / uHalf * p.w;
+  gl_Position = p;
+  float fog = mix(1.0, 0.2, smoothstep(16.0, 90.0, p.w / uScale));
+  vCol = vec4(aCol.rgb, aCol.a * fog);
+}`, `#version 300 es
+precision mediump float;
+in vec4 vCol; out vec4 o;
+void main(){ o = vec4(vCol.rgb * vCol.a, vCol.a); }`, ["aA", "aB", "aES", "aCol"]);
+const lU = { mvp: gl.getUniformLocation(lineProg, "uMvp"), half: gl.getUniformLocation(lineProg, "uHalf"),
+             width: gl.getUniformLocation(lineProg, "uWidth"), scale: gl.getUniformLocation(lineProg, "uScale") };
+
+class Lines {
+  constructor(dynamic) { this.v = []; this.dynamic = dynamic; this.vao = gl.createVertexArray(); this.buf = gl.createBuffer(); this.ibuf = gl.createBuffer(); this.count = 0; this.cap = 0; }
+  seg(a, b, c, w = 1) {
+    const v = this.v;
+    for (const [e, s] of [[0, -w], [0, w], [1, -w], [1, w]])
+      v.push(a[0], a[1], a[2], b[0], b[1], b[2], e, s, c[0], c[1], c[2], c[3]);
+  }
+  path(pts, c, w = 1, closed = false) {
+    for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i], pts[i + 1], c, w);
+    if (closed) this.seg(pts[pts.length - 1], pts[0], c, w);
+  }
+  box(x, y, z, sx, sy, sz, c, yaw = 0) {
+    const cs = Math.cos(yaw), sn = Math.sin(yaw);
+    const P = (dx, dy, dz) => [x + dx * cs + dz * sn, y + dy, z - dx * sn + dz * cs];
+    const hx = sx / 2, hz = sz / 2;
+    const b = [P(-hx, 0, -hz), P(hx, 0, -hz), P(hx, 0, hz), P(-hx, 0, hz)], t = [P(-hx, sy, -hz), P(hx, sy, -hz), P(hx, sy, hz), P(-hx, sy, hz)];
+    this.path(b, c, 1, true); this.path(t, c, 1, true);
+    for (let i = 0; i < 4; i++) this.seg(b[i], t[i], c);
+  }
+  upload() {
+    const n = this.v.length / 48;                // segments
+    gl.bindVertexArray(this.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.v), this.dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    if (!this.cap) {
+      const st = 48;
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, st, 0);
+      gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, st, 12);
+      gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, st, 24);
+      gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, st, 32);
+    }
+    if (n > this.cap) {
+      const idx = new Uint32Array(n * 6);
+      for (let i = 0; i < n; i++) idx.set([i*4, i*4+1, i*4+2, i*4+2, i*4+1, i*4+3], i * 6);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuf); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+      this.cap = n;
+    }
+    gl.bindVertexArray(null);
+    this.count = n * 6; if (this.dynamic) this.v.length = 0;
+  }
+  draw() { if (!this.count) return; gl.bindVertexArray(this.vao); gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_INT, 0); }
+}
+
+// ---------------------------------------------------------------- scenery (all line art)
+const G = (a) => [0.65, 0.93, 0.47, a];
+const scene = new Lines(false);
+
+// faint ground grid on the flat part
+for (let x = -45; x <= 45; x += 5) scene.seg([x, 0, 14], [x, 0, -66], G(0.09));
+for (let z = 14; z >= -66; z -= 5) scene.seg([-45, 0, z], [45, 0, z], G(0.09));
+
+// fireworks night: water ripples by the first boards
+for (let k = 0; k < 7; k++) {
+  const z0 = -2 - k * 2.6, pts = [];
+  for (let x = 8; x <= 34; x += 1) pts.push([x, 0.02, z0 + 0.35 * Math.sin(x * 0.8 + k)]);
+  scene.path(pts, G(0.16));
+}
+
+// talk venue: screen, lectern, rows of seats
+(() => {
+  const c = G(0.5), sx = -9, sz = -26;
+  scene.path([[sx - 2.4, 1.3, sz], [sx + 2.4, 1.3, sz], [sx + 2.4, 4.0, sz], [sx - 2.4, 4.0, sz]], c, 1.3, true);
+  scene.seg([sx - 2.0, 0, sz], [sx - 2.0, 1.3, sz], G(0.3)); scene.seg([sx + 2.0, 0, sz], [sx + 2.0, 1.3, sz], G(0.3));
+  scene.box(sx + 3.4, 0, sz + 1.2, 0.7, 1.15, 0.5, c);
+  for (let r = 0; r < 4; r++) for (let k = 0; k < 6; k++) {
+    const x = sx - 2.75 + k * 1.1, z = sz + 4 + r * 1.3;
+    scene.box(x, 0, z, 0.55, 0.45, 0.5, G(0.3));
+    scene.seg([x - 0.27, 0.45, z + 0.25], [x - 0.27, 0.95, z + 0.25], G(0.3)); scene.seg([x + 0.27, 0.45, z + 0.25], [x + 0.27, 0.95, z + 0.25], G(0.3));
+    scene.seg([x - 0.27, 0.95, z + 0.25], [x + 0.27, 0.95, z + 0.25], G(0.3));
+  }
+})();
+
+// Tokyo: skyline and a lattice tower
+(() => {
+  const routeX = z => z > -44 ? lerp(-3, 5, (-31 - z) / 13) : lerp(5, 0, (-44 - z) / 12);
+  let made = 0, guard = 0;
+  while (made < 40 && guard++ < 600) {
+    const x = -34 + rnd() * 70, z = -30 - rnd() * 32, w = 2 + rnd() * 3.2, d = 2 + rnd() * 3.2, h = 4 + rnd() * rnd() * 22;
+    if (Math.abs(x - routeX(Math.max(-56, Math.min(-31, z)))) < 6.5) continue;
+    if (Math.hypot(x - 17, z + 50) < 5) continue;
+    const c = G(0.2 + rnd() * 0.18);
+    scene.box(x, 0, z, w, h, d, c);
+    for (let y = 2.2; y < h - 0.6; y += 2.2) scene.path([[x - w/2, y, z + d/2], [x + w/2, y, z + d/2]], G(0.1));
+    made++;
+  }
+  const tx = 17, tz = -50, top = 27, c = G(0.55), ring = (y) => { const r = 3.2 * Math.pow(1 - y / top, 1.6) + 0.12; return [[tx - r, y, tz - r], [tx + r, y, tz - r], [tx + r, y, tz + r], [tx - r, y, tz + r]]; };
+  let prev = ring(0);
+  for (let y = 3; y <= top; y += 3) {
+    const cur = ring(Math.min(y, top - 0.01));
+    for (let i = 0; i < 4; i++) { scene.seg(prev[i], cur[i], c); scene.seg(prev[i], cur[(i + 1) % 4], G(0.22)); }
+    scene.path(cur, G(0.4), 1, true); prev = cur;
+  }
+  scene.seg([tx, top, tz], [tx, top + 4, tz], c);
+})();
+
+// the flight: clouds
+for (const [cx, cy, cz, r] of [[-12, 8, -52, 4], [9, 11.5, -60, 5], [-14, 12.5, -68, 3.5], [12, 7, -70, 3]]) {
+  for (const [dx, dy, s] of [[0, 0, 1], [r * 0.7, -0.25, 0.7], [-r * 0.75, -0.3, 0.6]]) {
+    const pts = []; for (let a = 0; a < 28; a++) { const t = a / 28 * Math.PI * 2; pts.push([cx + dx + Math.cos(t) * r * s, cy + dy + Math.sin(t) * r * s * 0.32, cz]); }
+    scene.path(pts, G(0.2), 1, true);
+  }
+}
+
+// the mountain: contour lines by marching squares
+(() => {
+  const x0 = -50, z0 = -152, cs = 1.25, nx = 81, nz = 73, hgt = new Float32Array(nx * nz);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) hgt[j * nx + i] = ground(x0 + i * cs, z0 + j * cs);
+  let li = 0;
+  for (let lv = 0.9; lv < 24; lv += 1.5, li++) {
+    const c = G(li % 4 === 3 ? 0.55 : 0.3);
+    for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) {
+      const v = [hgt[j * nx + i], hgt[j * nx + i + 1], hgt[(j + 1) * nx + i + 1], hgt[(j + 1) * nx + i]];
+      const X = [x0 + i * cs, x0 + (i + 1) * cs, x0 + (i + 1) * cs, x0 + i * cs], Z = [z0 + j * cs, z0 + j * cs, z0 + (j + 1) * cs, z0 + (j + 1) * cs];
+      const pts = [];
+      for (let e = 0; e < 4; e++) {
+        const a = v[e], b = v[(e + 1) % 4];
+        if ((a < lv) !== (b < lv)) { const t = (lv - a) / (b - a); pts.push([lerp(X[e], X[(e + 1) % 4], t), lv, lerp(Z[e], Z[(e + 1) % 4], t)]); }
+      }
+      if (pts.length >= 2) scene.seg(pts[0], pts[1], c);
+      if (pts.length === 4) scene.seg(pts[2], pts[3], c);
+    }
+  }
+  const sy = ground(MT.x, MT.z);            // summit flag
+  scene.seg([MT.x, sy, MT.z - 2.5], [MT.x, sy + 2.2, MT.z - 2.5], G(0.9), 1.4);
+  scene.path([[MT.x, sy + 2.2, MT.z - 2.5], [MT.x + 1.1, sy + 1.85, MT.z - 2.5], [MT.x, sy + 1.5, MT.z - 2.5]], G(0.9), 1.4);
+})();
+
+// the route itself, through the foot of every board
+(() => {
+  const foot = boards.map(b => [b.c[0], b.base + 0.06, b.c[2]]), isSky = boards.map(b => b.sky);
+  const P = [[0, 0.06, 9], ...foot, [MT.x, ground(MT.x, MT.z) + 0.06, MT.z - 2.5]], S = [false, ...isSky, false];
+  const cr = (a, b, c, d, t) => 0.5 * ((2*b) + (-a + c)*t + (2*a - 5*b + 4*c - d)*t*t + (-a + 3*b - 3*c + d)*t*t*t);
+  const pts = [], SUB = 18;
+  for (let i = 0; i + 1 < P.length; i++) for (let k = 0; k <= (i + 2 === P.length ? SUB : SUB - 1); k++) {
+    const t = k / SUB, A = P[Math.max(0, i - 1)], B = P[i], C = P[i + 1], D = P[Math.min(P.length - 1, i + 2)];
+    const x = cr(A[0], B[0], C[0], D[0], t), z = cr(A[2], B[2], C[2], D[2], t);
+    let y = ground(x, z) + 0.06;
+    if (S[i] || S[i + 1]) y = Math.max(y, lerp(B[1], C[1], t * t * (3 - 2 * t)));
+    pts.push([x, y, z]);
+  }
+  scene.path(pts, [0.86, 1, 0.74, 0.9], 1.7);
+  boards.forEach((b, i) => {
+    const r = [1, 0, 0].map((_, a) => [Math.cos(b.yaw), 0, -Math.sin(b.yaw)][a]), hw = W / 2 + 0.012, hh = H / 2 + 0.012;
+    const at = (sx, sy) => [b.c[0] + r[0] * sx, b.c[1] + sy, b.c[2] + r[2] * sx];
+    scene.path([at(-hw, -hh), at(hw, -hh), at(hw, hh), at(-hw, hh)], G(0.85), 1.2, true);
+    if (!b.sky) for (const sx of [-hw * 0.82, hw * 0.82]) { const q = at(sx, -hh); scene.seg(q, [q[0], ground(q[0], q[2]), q[2]], G(0.5)); }
+    else scene.seg(at(0, -hh), [b.c[0], b.c[1] - hh - 1.2, b.c[2]], G(0.3));
+  });
+})();
+scene.upload();
+
+// moving parts: fireworks bursts and the plane
+const live = new Lines(true);
+const RAYS = Array.from({ length: 30 }, () => { const u = rnd() * 2 - 1, a = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u); return [s * Math.cos(a), u, s * Math.sin(a)]; });
+const BURSTS = [[4, 11, -20, 3.6, [1, 0.6, 0.62]], [12, 14, -26, 4.4, [1, 0.86, 0.5]], [-6, 12.5, -24, 3.8, [0.6, 0.86, 1]],
+                [17, 10, -17, 3.0, [0.8, 1, 0.66]], [8, 16.5, -32, 4.8, [1, 1, 1]]].map((b, i) => ({ c: b.slice(0, 3), r: b[3], col: b[4], period: 2.9 + i * 0.37, phase: i * 0.83 }));
+function buildLive(time) {
+  for (const b of BURSTS) {
+    const u = ((time + b.phase) % b.period) / b.period;
+    if (u < 0.22) {                                   // rising trail
+      const k = u / 0.22, y1 = lerp(0, b.c[1], 1 - (1 - k) ** 2), y0 = Math.max(0, y1 - 2.2);
+      live.seg([b.c[0], y0, b.c[2]], [b.c[0], y1, b.c[2]], [...b.col, 0.5]);
+      continue;
+    }
+    const t = (u - 0.22) / 0.78, out = t => b.r * (1 - (1 - t) ** 3), a = Math.pow(1 - t, 1.4);
+    const r1 = out(t), r0 = out(Math.max(0, t - 0.2)), drop = 1.6 * t * t;
+    for (const d of RAYS) live.seg([b.c[0] + d[0] * r0, b.c[1] + d[1] * r0 - drop, b.c[2] + d[2] * r0],
+                                   [b.c[0] + d[0] * r1, b.c[1] + d[1] * r1 - drop, b.c[2] + d[2] * r1], [...b.col, a], 1.15);
+  }
+  // plane crossing the sky section
+  const u = (time * 0.045) % 1, A = [-26, 12.5, -50], B = [24, 14.5, -70];
+  const pos = lerp3(A, B, u), hd = Math.atan2(-(B[2] - A[2]), B[0] - A[0]), cs = Math.cos(hd), sn = Math.sin(hd), fade = Math.min(1, u * 8, (1 - u) * 8);
+  const Q = (x, y, z) => [pos[0] + (x * cs + z * sn) * 1.5, pos[1] + y * 1.5, pos[2] + (-x * sn + z * cs) * 1.5], c = G(0.85 * fade);
+  live.path([Q(1.7, 0, 0), Q(1.2, 0.16, 0), Q(-1.5, 0.16, 0), Q(-1.8, 0.05, 0), Q(-1.5, -0.12, 0), Q(1.2, -0.12, 0), Q(1.7, 0, 0)], c, 1.2);
+  live.path([Q(0.5, 0, 0), Q(-0.4, 0, 1.6), Q(-0.75, 0, 1.6), Q(-0.3, 0, 0), Q(-0.75, 0, -1.6), Q(-0.4, 0, -1.6), Q(0.5, 0, 0)], c, 1.2);
+  live.path([Q(-1.2, 0.16, 0), Q(-1.75, 0.75, 0), Q(-1.95, 0.75, 0), Q(-1.7, 0.1, 0)], c, 1.2);
+  live.path([Q(-1.35, 0.05, 0), Q(-1.8, 0.05, 0.6), Q(-1.95, 0.05, 0.6), Q(-1.7, 0.05, 0), Q(-1.95, 0.05, -0.6), Q(-1.8, 0.05, -0.6), Q(-1.35, 0.05, 0)], c);
+  for (let k = 0; k < 7; k++) live.seg(Q(-2.4 - k * 1.1, 0, 0), Q(-2.9 - k * 1.1, 0, 0), G(0.4 * fade * (1 - k / 7)));
+  live.upload();
+}
+
+// ---------------------------------------------------------------- textured quads
+function quadMesh() {
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-.5,-.5,0, 0,1,  .5,-.5,0, 1,1,  -.5,.5,0, 0,0,  .5,.5,0, 1,0]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+  gl.bindVertexArray(null); return vao;
+}
+const quad = quadMesh();
+function tex(source, mip) {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  if (source) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([20, 28, 24, 255]));
+  if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const an = gl.getExtension("EXT_texture_filter_anisotropic");
+  if (mip && an) gl.texParameterf(gl.TEXTURE_2D, an.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(an.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  return t;
+}
+const BLANK = tex(null, false), BLACK = (() => { const t = tex(null, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255])); return t; })();
+
+const slides = SLIDES.map(s => ({ tex: null, movies: s.movies.map(m => ({ ...m, el: null, tex: null, ready: false })) }));
+(async () => {
+  for (let i = 0; i < SLIDES.length; i++) {
+    await new Promise(done => {
+      const img = new Image();
+      img.onload = () => { slides[i].tex = tex(img, true); done(); };
+      img.onerror = () => { console.warn("slide image failed", SLIDES[i].src); done(); };
+      img.src = SLIDES[i].src;
+    });
+  }
+})();
+
+// title and timer are drawn to 2D canvases and used as textures
+const FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", Meiryo, sans-serif';
+const titleTex = (() => {
+  const c = document.createElement("canvas"); c.width = 2048; c.height = 720;
+  const g = c.getContext("2d"); g.textAlign = "center"; g.textBaseline = "middle";
+  g.shadowColor = "rgba(0,0,0,.9)"; g.shadowBlur = 26;
+  g.fillStyle = "#a6ed79"; g.font = "700 172px " + FONT;
+  TITLE.forEach((line, i) => g.fillText(line, 1024, 150 + i * 215));
+  g.fillStyle = "#f5f7f3"; g.font = "400 76px " + FONT; g.fillText(BYLINE, 1024, 610);
+  return { t: tex(c, true), aspect: c.width / c.height };
+})();
+const qr = { t: null, big: false };
+{ const img = new Image(); img.onload = () => { qr.t = tex(img, true); }; img.src = "deck/qr.png"; }
+const timer = (() => {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 96;
+  return { c, g: c.getContext("2d"), t: tex(c, false), shown: "", start: 0, on: false };
+})();
+function updateTimer(now) {
+  const left = timer.start ? TALK_SECONDS - (now - timer.start) / 1000 : TALK_SECONDS;
+  const a = Math.abs(Math.ceil(left)), text = (left < 0 ? "-" : "") + Math.floor(a / 60) + ":" + String(a % 60).padStart(2, "0");
+  if (text === timer.shown) return; timer.shown = text;
+  const g = timer.g; g.clearRect(0, 0, 256, 96); g.textAlign = "right"; g.textBaseline = "middle";
+  g.font = "700 72px ui-monospace, Menlo, Consolas, monospace"; g.fillStyle = left < 0 ? "#ff8a80" : left < 60 ? "#ffd166" : "#a6ed79";
+  g.fillText(text, 248, 52);
+  gl.bindTexture(gl.TEXTURE_2D, timer.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, timer.c);
+}
+
+// ---------------------------------------------------------------- movies
+let muted = true;
+function ensureMovie(m) {
+  if (m.el) return;
+  const v = document.createElement("video");
+  v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
+  v.setAttribute("playsinline", ""); v.setAttribute("muted", "");
+  v.src = m.src; m.el = v; m.tex = tex(null, false);
+}
+function syncMovies(stop) {
+  slides.forEach((s, i) => s.movies.forEach(m => {
+    if (Math.abs(i - stop) <= 1) ensureMovie(m);
+    if (!m.el) return;
+    if (i === stop) { m.el.muted = muted; if (m.el.paused) m.el.play().catch(() => {}); }
+    else { m.el.muted = true; if (!m.el.paused) m.el.pause(); }
+  }));
+}
+
+// ---------------------------------------------------------------- navigation
+let k = 0, tween = null, fit = false;          // k indexes poses[]
+function current(now) {
+  if (!tween) return { q: poses[k], a: k, b: k, t: 1 };
+  const t = Math.min(1, (now - tween.t0) / tween.dur);
+  const q = blend(poses[tween.from], poses[tween.to], t);
+  const res = { q, a: tween.from, b: tween.to, t: ease(t) };
+  if (t >= 1) tween = null;
+  return res;
+}
+function go(to) {
+  to = Math.max(0, Math.min(poses.length - 1, to));
+  if (to === k) return;
+  const a = poses[k], b = poses[to], dist = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]);
+  const dur = (a.stop < 0 || b.stop < 0) ? 2900 : Math.min(2600, 1150 + 42 * dist);
+  tween = { from: k, to, t0: performance.now(), dur };
+  if (k === 0 && !timer.start) timer.start = performance.now();
+  k = to; syncMovies(poses[k].stop); publishLive(k);
+  document.getElementById("ar").dataset.used = "1";
+}
+const next = () => go(k + 1), prev = () => go(k - 1);
+
+// ---------------------------------------------------------------- drawing
+function drawQuad(mvp, texture, color) {
+  gl.uniformMatrix4fv(tU.mvp, false, mvp); gl.uniform4fv(tU.color, color);
+  gl.bindTexture(gl.TEXTURE_2D, texture); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+// vp: projection*view (viewer space = the space poses are expressed in); st: result of current()
+function drawWorld(vp, st, xr, halfW, halfH, linePx) {
+  const world = M.mul(vp, poseMatrix(st.q, xr));
+  const weight = i => (poses[st.b].stop === i ? st.t : 0) + (poses[st.a].stop === i ? 1 - st.t : 0);
+  const overview = (poses[st.b].stop < 0 ? st.t : 0) + (poses[st.a].stop < 0 ? 1 - st.t : 0);
+
+  gl.useProgram(texProg); gl.activeTexture(gl.TEXTURE0); gl.bindVertexArray(quad);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  boards.forEach((b, i) => {
+    const s = slides[i], w = weight(i), br = Math.max(0.3 + 0.7 * w, 0.8 * overview);
+    const at = M.mul(world, b.model);
+    drawQuad(M.mul(at, M.scale(W, H, 1)), s.tex || BLANK, [br, br, br, 1]);
+    if (w < 0.5) return;
+    for (const m of s.movies) {
+      const v = m.el; if (!v || !m.tex) continue;
+      if (v.readyState >= 2 && v.videoWidth) {
+        gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v); m.ready = true;
+      }
+      if (!m.ready) continue;
+      const rw = m.w * W, rh = m.h * H, cx = (m.l + m.w / 2 - 0.5) * W, cy = (0.5 - m.t - m.h / 2) * H, ar = v.videoWidth / v.videoHeight;
+      let vw = rw, vh = rw / ar; if (vh > rh) { vh = rh; vw = rh * ar; }
+      drawQuad(M.mul(at, M.mul(M.trans(cx, cy, 0.003), M.scale(rw, rh, 1))), BLACK, [1, 1, 1, 1]);
+      drawQuad(M.mul(at, M.mul(M.trans(cx, cy, 0.006), M.scale(vw, vh, 1))), m.tex, [br, br, br, 1]);
+    }
+  });
+
+  gl.useProgram(lineProg); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false);
+  gl.uniformMatrix4fv(lU.mvp, false, world); gl.uniform2f(lU.half, halfW, halfH);
+  gl.uniform1f(lU.width, linePx); gl.uniform1f(lU.scale, Math.exp(st.q.ls));
+  scene.draw(); live.draw();
+
+  // title floats over the diorama while we are at the opening overview
+  const titleA = (st.b === 0 ? st.t : 0) + (st.a === 0 ? 1 - st.t : 0);
+  if (titleA > 0.01) {
+    gl.useProgram(texProg); gl.bindVertexArray(quad); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
+    const w = xr ? 0.95 : 1.15, pos = xr ? [0, 0.06, -1.25] : [0, 0.27, -1.5];
+    drawQuad(M.mul(vp, M.mul(M.trans(pos[0], pos[1] + (1 - titleA) * 0.08, pos[2]), M.scale(w, w / titleTex.aspect, 1))), titleTex.t, [1, 1, 1, titleA * titleA]);
+  }
+  // the QR to the audience page sits beside the title on both overviews; Q shows it large at any time
+  const qrA = qr.big ? 1 : overview;
+  if (qr.t && !window.__hideQR && qrA > 0.01) {
+    gl.useProgram(texProg); gl.bindVertexArray(quad); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
+    const s = qr.big ? (xr ? 0.5 : 0.78) : (xr ? 0.2 : 0.3);
+    const pos = qr.big ? [0, 0, xr ? -1.25 : -1.5] : (xr ? [0.62, 0.05, -1.25] : [0.82, 0.24, -1.5]);
+    drawQuad(M.mul(vp, M.mul(M.trans(pos[0], pos[1], pos[2]), M.scale(s, s, 1))), qr.t, [1, 1, 1, qrA * qrA]);
+  }
+  gl.depthMask(true); gl.disable(gl.BLEND); gl.bindVertexArray(null);
+}
+function drawTimer(mvp, now) {
+  updateTimer(now);
+  gl.useProgram(texProg); gl.bindVertexArray(quad); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
+  drawQuad(mvp, timer.t, [1, 1, 1, 1]);
+  gl.disable(gl.BLEND); gl.bindVertexArray(null);
+}
+
+// ---------------------------------------------------------------- window rendering
+function frameFlat(now) {
+  if (xrSession) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  buildLive(now / 1000);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, w, h);
+  gl.clearColor(0.016, 0.03, 0.026, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const aspect = w / h, fill = fit ? 0.97 : 0.66;
+  const tanY = Math.max((H / 2) / (fill * VIEW_D), (W / 2) / (0.94 * VIEW_D * aspect));
+  const proj = M.persp(2 * Math.atan(tanY), aspect, 0.03, 400);
+  drawWorld(proj, current(now), false, w / 2, h / 2, 1.5 * dpr);
+  if (timer.on) drawTimer(M.mul(proj, M.mul(M.trans(tanY * aspect * 0.86 - 0.02, -tanY * 0.86, -1), M.scale(0.2 * tanY * 2, 0.075 * tanY * 2, 1))), now);
+  requestAnimationFrame(frameFlat);
+}
+
+// ---------------------------------------------------------------- WebXR
+let xrSession = null, xrSpace = null, xrRoot = null, wantRecenter = true;
+const arButton = document.getElementById("ar");
+async function setupXR() {
+  if (!navigator.xr) return;
+  let mode = null;
+  for (const m of ["immersive-ar", "immersive-vr"]) {
+    try { if (await navigator.xr.isSessionSupported(m)) { mode = m; break; } } catch (e) {}
+  }
+  if (!mode) return;
+  arButton.style.display = "block";
+  arButton.addEventListener("click", async () => {
+    try {
+      if (gl.makeXRCompatible) await gl.makeXRCompatible();
+      const session = await navigator.xr.requestSession(mode, { optionalFeatures: ["hand-tracking"] });
+      session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl), depthNear: 0.03, depthFar: 400 });
+      xrSpace = await session.requestReferenceSpace("local");
+      session.addEventListener("select", e => (e.inputSource && e.inputSource.handedness === "left") ? prev() : next());
+      session.addEventListener("squeeze", () => { wantRecenter = true; });
+      session.addEventListener("end", () => { xrSession = null; arButton.style.display = "block"; requestAnimationFrame(frameFlat); });
+      xrSession = session; wantRecenter = true; arButton.style.display = "none";
+      syncMovies(poses[k].stop);
+      session.requestAnimationFrame(frameXR);
+    } catch (e) {
+      note.style.display = "block"; note.textContent = "ARを開始できませんでした";
+      setTimeout(() => { note.style.display = "none"; }, 3000);
+    }
+  });
+}
+function frameXR(now, frame) {
+  const session = frame.session;
+  session.requestAnimationFrame(frameXR);
+  const pose = frame.getViewerPose(xrSpace); if (!pose) return;
+  if (wantRecenter || !xrRoot) {       // the scene is laid out around where the head is and points now
+    const p = pose.transform.position, q = pose.transform.orientation;
+    const fx = -2 * (q.x * q.z + q.w * q.y), fz = -(1 - 2 * (q.x * q.x + q.y * q.y));
+    xrRoot = M.mul(M.trans(p.x, p.y, p.z), M.rotY(Math.atan2(-fx, -fz)));
+    wantRecenter = false;
+  }
+  buildLive(now / 1000);
+  const st = current(now), layer = session.renderState.baseLayer;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+  gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  for (const view of pose.views) {
+    const vp = layer.getViewport(view);
+    gl.viewport(vp.x, vp.y, vp.width, vp.height);
+    const pv = M.mul(view.projectionMatrix, view.transform.inverse.matrix);
+    drawWorld(M.mul(pv, xrRoot), st, true, vp.width / 2, vp.height / 2, 2.0);
+    drawTimer(M.mul(pv, M.mul(pose.transform.matrix, M.mul(M.trans(0.2, -0.16, -1), M.scale(0.12, 0.045, 1)))), now);
+  }
+}
+
+// ---------------------------------------------------------------- input (window mode)
+window.addEventListener("keydown", e => {
+  const key = e.key;
+  if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(key)) { next(); e.preventDefault(); }
+  else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(key)) { prev(); e.preventDefault(); }
+  else if (key === "Home") go(0);
+  else if (key === "End") go(poses.length - 1);
+  else if (key === "z" || key === "Z") fit = !fit;
+  else if (key === "t" || key === "T") timer.on = !timer.on;
+  else if (key === "q" || key === "Q") qr.big = !qr.big;
+  else if (key === "m" || key === "M") { muted = !muted; syncMovies(poses[k].stop); }
+  else if (key === "f" || key === "F") {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
+});
+let down = null;
+canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener("pointerup", e => {
+  if (!down) return;
+  const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); return; }
+  if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
+  e.clientX < canvas.clientWidth * 0.3 ? prev() : next();
+});
+canvas.addEventListener("pointercancel", () => { down = null; });
+
+publishLive(k);
+setupXR();
+requestAnimationFrame(frameFlat);
+}
+
+// ---------------------------------------------------------------- which page to open
+(async () => {
+  const hash = location.hash.slice(1);
+  let mode = hash.startsWith("stage") ? "stage" : hash === "audience" ? "audience" : null;
+  if (NTFY) { broadcastKeyOk = await checkBroadcastKey(hash).catch(() => false); if (!mode) mode = "audience"; }
+  if (!mode) {
+    const user = await Promise.race([userReady, new Promise(r => setTimeout(() => r(null), 3500))]);
+    let owner = false;
+    try { owner = (await (user && user.isOwner())) || false; } catch (e) {}
+    mode = owner ? "stage" : "audience";
+  }
+  if (mode === "stage") startStage(); else startAudience();
+})();
+</script>
+</body>
+</html>
