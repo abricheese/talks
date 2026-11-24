@@ -12,37 +12,6 @@
     padding: 12px 20px; border: 0; border-radius: 6px;
     background: #a6ed79; color: #101614; font: 700 17px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; cursor: pointer;
   }
-  /* ---- audience page ---- */
-  body.aud { background: #101614; color: #f5f7f3; overflow: auto; font: 700 14px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
-  body.aud canvas, body.aud #ar { display: none !important; }
-  #aud { --bar: 58px; }
-  #frameWrap { height: 100vh; height: 100dvh; box-sizing: border-box; padding-bottom: var(--bar); display: grid; place-items: center; }
-  #frame { position: relative; width: min(100vw, calc((100vh - var(--bar)) * 16 / 9)); width: min(100dvw, calc((100dvh - var(--bar)) * 16 / 9)); aspect-ratio: 16 / 9; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
-  #slideImg { display: block; width: 100%; height: 100%; }
-  .clip { position: absolute; overflow: hidden; background: #000; }
-  .clip video { display: block; width: 100%; height: 100%; object-fit: contain; }
-  #tall, #grid { display: none; }
-  #bar { position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 12px; background: rgba(16, 22, 20, .94); z-index: 5; }
-  .pill { font: inherit; color: #fff; background: #141413; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
-  .pill:disabled { opacity: .36; cursor: default; }
-  #followButton[aria-pressed="true"] { background: #a6ed79; border-color: #a6ed79; color: #101614; }
-  #aPage { min-width: 58px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; color: #c3cdc5; }
-  #followNote { position: fixed; right: 12px; bottom: calc(var(--bar) + 10px); max-width: 290px; background: #141413; border: 1px solid #4c4c4c; border-radius: 8px; padding: 10px 12px; font-weight: 500; line-height: 1.5; z-index: 6; }
-  #followNote a { color: #a6ed79; font-weight: 700; }
-  #zoom { position: fixed; inset: 0; z-index: 10; background: #000; overflow: auto; -webkit-overflow-scrolling: touch; }
-  #zoom img { display: block; height: 100vh; height: 100dvh; width: auto; max-width: none; }
-  [hidden] { display: none !important; }
-  @media (max-aspect-ratio: 1/1) {
-    #frameWrap { height: auto; padding: 0; display: block; }
-    #frame { width: 100vw; }
-    #clips { display: none; }
-    #tall { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
-    #tall video { display: block; width: 100%; max-height: 72vh; max-height: 72dvh; background: #000; }
-    #grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 14px 6px calc(var(--bar) + 16px); }
-    #grid button { display: block; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; }
-    #grid button[aria-current="true"] { border-color: #a6ed79; }
-    #grid img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
-  }
   #note {
     position: fixed; left: 0; right: 0; top: 45%; text-align: center; display: none;
     color: #c3cdc5; font: 16px "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
@@ -53,204 +22,14 @@
 <canvas id="c" tabindex="0"></canvas>
 <button id="ar" type="button">ARで開く</button>
 <p id="note"></p>
-<div id="aud" hidden>
-  <div id="frameWrap"><div id="frame"><img id="slideImg" alt="" draggable="false"><div id="clips"></div></div></div>
-  <div id="tall"></div>
-  <div id="grid"></div>
-  <nav id="bar" aria-label="スライド操作">
-    <button class="pill" id="aPrev" type="button" aria-label="前のスライド">‹</button>
-    <span id="aPage" role="status"></span>
-    <button class="pill" id="aNext" type="button" aria-label="次のスライド">›</button>
-    <button class="pill" id="followButton" type="button" aria-pressed="false">発表者に追従</button>
-  </nav>
-  <div id="followNote" role="status" hidden></div>
-  <div id="zoom" hidden><img id="zoomImg" alt=""></div>
-</div>
 <script>
 "use strict";
 const SLIDES = [{"src": "deck/slides/f1.jpg", "movies": []}, {"src": "deck/slides/f7.jpg", "movies": [{"src": "deck/media/fw-otaku.mp4", "l": 0.148828, "t": 0.192209, "w": 0.333984, "h": 0.791667}, {"src": "deck/media/fw-otaku-debug.mp4", "l": 0.517188, "t": 0.192209, "w": 0.333984, "h": 0.791667}]}, {"src": "deck/slides/06.jpg", "movies": []}, {"src": "deck/slides/07.jpg", "movies": [{"src": "deck/media/claude-meetup.mp4", "l": 0.667969, "t": 0.079167, "w": 0.267188, "h": 0.844444}]}, {"src": "deck/slides/08.jpg", "movies": []}, {"src": "deck/slides/09.jpg", "movies": [{"src": "deck/media/unreal-rokid.mp4", "l": 0.060937, "t": 0.211111, "w": 0.189844, "h": 0.6}, {"src": "deck/media/unreal-mac.mp4", "l": 0.363281, "t": 0.211111, "w": 0.567969, "h": 0.6}]}, {"src": "deck/slides/10.jpg", "movies": []}, {"src": "deck/slides/11.jpg", "movies": []}, {"src": "deck/slides/12.jpg", "movies": [{"src": "deck/media/wired-iphone.mp4", "l": 0.420312, "t": 0.134722, "w": 0.253125, "h": 0.8}, {"src": "deck/media/wired-mac.mp4", "l": 0.699219, "t": 0.134722, "w": 0.253125, "h": 0.8}]}, {"src": "deck/slides/13.jpg", "movies": []}, {"src": "deck/slides/14.jpg", "movies": []}, {"src": "deck/slides/15.jpg", "movies": [{"src": "deck/media/hike-week-two.mp4", "l": 0.704688, "t": 0.236111, "w": 0.253125, "h": 0.6}]}, {"src": "deck/slides/16.jpg", "movies": [{"src": "deck/media/shiratori.mp4", "l": 0.691406, "t": 0.177778, "w": 0.2375, "h": 0.75}]}, {"src": "deck/slides/w4a.jpg", "movies": [{"src": "deck/media/claude-tozan.mp4", "l": 0.634375, "t": 0.061111, "w": 0.28125, "h": 0.888889}]}, {"src": "deck/slides/w4b.jpg", "movies": []}, {"src": "deck/slides/w4c.jpg", "movies": [{"src": "deck/media/aura-long.mp4", "l": 0.373437, "t": 0.208333, "w": 0.579688, "h": 0.579167}]}];
-const COVER = "deck/cover.jpg";
-
-// ---------------------------------------------------------------- shared: who is viewing, and the live position
-const claudeApi = window.claude && typeof window.claude.use === "function" ? window.claude : null;
-const dbReady = claudeApi ? claudeApi.use("db").catch(() => null) : Promise.resolve(null);
-const userReady = claudeApi ? claudeApi.use("user").catch(() => null) : Promise.resolve(null);
-const LIVE = "live/current";
-// サインインなしで見られる場所（GitHub Pages）では、以前と同じ公開の通知サービスで現在ページを配る。送るのはページ番号だけ。
-const NTFY = claudeApi ? null : (window.__NTFY || "https://ntfy.sh/abchee-lt-a38fb24e43b8a2cb");
-const KEY_HASH = "57f9aa21a7adb921928748db2187b24b0c42d89ba01957999583a5db85798e7e";
-let broadcastKeyOk = false;
-async function checkBroadcastKey(hash) {
-  const key = hash.split("-").slice(1).join("-");
-  if (!key || !window.crypto || !crypto.subtle) return false;
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
-  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("") === KEY_HASH;
-}
-
-// presenter side: one write at a time, always the newest position
-const live = { db: null, busy: false, want: null, sent: null };
-dbReady.then(db => { live.db = db; pumpLive(); });
-function publishLive(k) { live.want = k; pumpLive(); }
-async function pumpLive() {
-  if (live.busy || document.body.classList.contains("aud")) return;
-  if (!live.db && !(NTFY && broadcastKeyOk)) return;
-  live.busy = true;
-  while (live.want !== null && live.want !== live.sent) {
-    const v = live.want;
-    try {
-      if (live.db) await live.db.doc(LIVE).set({ k: v });
-      else { const r = await fetch(NTFY, { method: "POST", body: String(v) }); if (!r.ok) throw new Error("status " + r.status); }
-      live.sent = v;
-    } catch (e) {
-      console.warn("live position not sent", e && (e.code || e.message));
-      setTimeout(pumpLive, 2000); break;
-    }
-  }
-  live.busy = false;
-}
-
-// ---------------------------------------------------------------- audience page
-function startAudience() {
-  document.body.classList.add("aud");
-  const $ = id => document.getElementById(id);
-  $("aud").hidden = false;
-  const pages = [{ src: COVER, movies: [] }, ...SLIDES];
-  const portrait = window.matchMedia("(max-aspect-ratio: 1/1)");
-  let index = 0, following = false, latest = null, subscribed = false;
-
-  function render() {
-    const page = pages[index];
-    $("slideImg").src = page.src;
-    $("aPage").textContent = (index + 1) + " / " + pages.length;
-    $("aPrev").disabled = index === 0; $("aNext").disabled = index === pages.length - 1;
-    for (const box of [$("clips"), $("tall")]) { box.querySelectorAll("video").forEach(v => v.pause()); box.textContent = ""; }
-    for (const m of page.movies) {
-      const v = document.createElement("video");
-      v.controls = true; v.loop = true; v.muted = true; v.playsInline = true; v.preload = "auto";
-      v.setAttribute("playsinline", ""); v.setAttribute("controlslist", "nofullscreen"); v.disablePictureInPicture = true;
-      v.src = m.src;
-      if (portrait.matches) $("tall").appendChild(v);
-      else {
-        const clip = document.createElement("div"); clip.className = "clip";
-        clip.style.cssText = `left:${m.l * 100}%;top:${m.t * 100}%;width:${m.w * 100}%;height:${m.h * 100}%`;
-        clip.appendChild(v); $("clips").appendChild(clip);
-      }
-      v.play().catch(() => {});
-    }
-    $("grid").querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-current", String(i === index)));
-    const nextPage = pages[index + 1]; if (nextPage) new Image().src = nextPage.src;
-  }
-  function show(i) {
-    i = Math.max(0, Math.min(pages.length - 1, i));
-    if (i === index && $("slideImg").src) return;
-    index = i; render();
-    if (portrait.matches) window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-  const fromLive = k => Math.max(0, Math.min(pages.length - 1, k));
-
-  pages.forEach((page, i) => {
-    const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", (i + 1) + "枚目");
-    const img = document.createElement("img"); img.loading = "lazy"; img.alt = ""; img.src = page.src;
-    b.appendChild(img); b.addEventListener("click", () => manual(i)); $("grid").appendChild(b);
-  });
-  portrait.addEventListener("change", render);
-
-  // ---- following the presenter
-  const button = $("followButton"), note = $("followNote");
-  function setFollowing(on) {
-    following = on;
-    button.setAttribute("aria-pressed", String(on));
-    button.textContent = on ? "追従中（押すと解除）" : "発表者に追従";
-    if (on && latest !== null) show(fromLive(latest));
-  }
-  function showNote(build) { note.textContent = ""; build(note); note.hidden = false; }
-  function subscribe(db) {
-    if (subscribed) return; subscribed = true;
-    db.doc(LIVE).onSnapshot(snapshot => {
-      if (!snapshot.exists) return;
-      const k = Number(snapshot.data().k);
-      if (!Number.isFinite(k)) return;
-      latest = k;
-      if (following) show(fromLive(latest));
-    }, () => {
-      subscribed = false; setFollowing(false);
-      showNote(box => box.append("追従が止まりました。もう一度押してください。"));
-    });
-  }
-  // サインイン不要の経路。開いた時点の最新ページを1回だけ取りにいき、あとは流れてくる通知に合わせる。
-  let liveTime = 0;
-  function subscribeNtfy() {
-    if (subscribed) return; subscribed = true;
-    const apply = m => {
-      if (!m || m.event !== "message" || !(m.time >= liveTime)) return;
-      const k = Number(m.message);
-      if (!Number.isFinite(k)) return;
-      liveTime = m.time; latest = k;
-      if (following) show(fromLive(latest));
-    };
-    fetch(NTFY + "/json?poll=1&since=latest").then(r => r.text()).then(text => {
-      const lines = text.trim().split("\n").filter(Boolean);
-      if (!lines.length) return;
-      const m = JSON.parse(lines[lines.length - 1]);
-      if (Date.now() / 1000 - m.time < 1800) apply(m);        // 30分より前の位置は、終わった登壇のものとして使わない
-    }).catch(() => {});
-    const source = new EventSource(NTFY + "/sse");
-    source.onmessage = e => { try { apply(JSON.parse(e.data)); } catch (err) {} };
-  }
-  // 自分でめくったら追従を外して、自由に見られるようにする。
-  function manual(i) { setFollowing(false); note.hidden = true; show(i); }
-  button.addEventListener("click", async () => {
-    if (following) { setFollowing(false); return; }
-    if (NTFY) { note.hidden = true; subscribeNtfy(); setFollowing(true); return; }
-    button.textContent = "接続中…";
-    const db = await dbReady;
-    if (!db) {
-      button.textContent = "発表者に追従";
-      showNote(box => {
-        box.append("追従するにはClaudeへのログインが必要です。");
-        const link = document.createElement("a");
-        link.href = "https://claude.ai/login"; link.target = "_blank"; link.rel = "noopener"; link.textContent = "ログインする";
-        box.append(document.createElement("br"), link, "（ログイン後にこのページを開き直してください）");
-      });
-      return;
-    }
-    note.hidden = true; subscribe(db); setFollowing(true);
-  });
-  // QRから開いた人は、つながり次第そのまま追従を始める。
-  if (NTFY) { subscribeNtfy(); setFollowing(true); }
-  else dbReady.then(db => { if (db && !following && index === 0) { subscribe(db); setFollowing(true); } });
-
-  // ---- turning pages by hand
-  $("aPrev").addEventListener("click", () => manual(index - 1));
-  $("aNext").addEventListener("click", () => manual(index + 1));
-  addEventListener("keydown", e => {
-    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) { e.preventDefault(); manual(index + 1); }
-    else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); manual(index - 1); }
-  });
-  let touch = null;
-  $("frame").addEventListener("touchstart", e => { touch = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, { passive: true });
-  $("frame").addEventListener("touchend", e => {
-    if (!touch) return;
-    const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y; touch = null;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { e.preventDefault(); manual(index + (dx < 0 ? 1 : -1)); }
-  });
-  $("frame").addEventListener("click", e => {
-    if (e.target.closest(".clip")) return;
-    if (portrait.matches) { $("zoomImg").src = pages[index].src; $("zoom").hidden = false; $("zoom").scrollLeft = 0; return; }
-    const r = $("frame").getBoundingClientRect();
-    manual(index + (e.clientX - r.left < r.width * 0.3 ? -1 : 1));
-  });
-  $("zoom").addEventListener("click", () => { $("zoom").hidden = true; });
-
-  render();
-}
-
 // ---------------------------------------------------------------- presenter page (the 3D route)
 function startStage() {
 
 const TITLE = ["スマートグラス×AIで", "いろいろ作ってる話"];
 const BYLINE = "あぶち　@abricheese";
-const TALK_SECONDS = 300;
 
 // ---------------------------------------------------------------- math
 const M = {
@@ -630,7 +409,7 @@ const slides = SLIDES.map(s => ({ tex: null, movies: s.movies.map(m => ({ ...m, 
   }
 })();
 
-// title and timer are drawn to 2D canvases and used as textures
+// the title is drawn to a 2D canvas and used as a texture
 const FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", Meiryo, sans-serif';
 const titleTex = (() => {
   const c = document.createElement("canvas"); c.width = 2048; c.height = 720;
@@ -641,21 +420,6 @@ const titleTex = (() => {
   g.fillStyle = "#f5f7f3"; g.font = "400 76px " + FONT; g.fillText(BYLINE, 1024, 610);
   return { t: tex(c, true), aspect: c.width / c.height };
 })();
-const qr = { t: null, big: false };
-{ const img = new Image(); img.onload = () => { qr.t = tex(img, true); }; img.src = "deck/qr.png"; }
-const timer = (() => {
-  const c = document.createElement("canvas"); c.width = 256; c.height = 96;
-  return { c, g: c.getContext("2d"), t: tex(c, false), shown: "", start: 0, on: true };
-})();
-function updateTimer(now) {
-  const left = timer.start ? TALK_SECONDS - (now - timer.start) / 1000 : TALK_SECONDS;
-  const a = Math.abs(Math.ceil(left)), text = (left < 0 ? "-" : "") + Math.floor(a / 60) + ":" + String(a % 60).padStart(2, "0");
-  if (text === timer.shown) return; timer.shown = text;
-  const g = timer.g; g.clearRect(0, 0, 256, 96); g.textAlign = "right"; g.textBaseline = "middle";
-  g.font = "700 72px ui-monospace, Menlo, Consolas, monospace"; g.fillStyle = left < 0 ? "#ff8a80" : left < 60 ? "#ffd166" : "#a6ed79";
-  g.fillText(text, 248, 52);
-  gl.bindTexture(gl.TEXTURE_2D, timer.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, timer.c);
-}
 
 // ---------------------------------------------------------------- movies
 let muted = true;
@@ -718,8 +482,7 @@ function go(to) {
   const a = poses[k], b = poses[to], dist = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]);
   const dur = (a.stop < 0 || b.stop < 0) ? 2900 : Math.min(2600, 1150 + 42 * dist);
   tween = { from: k, to, t0: performance.now(), dur };
-  if (k === 0 && !timer.start) timer.start = performance.now();
-  k = to; syncMovies(poses[k].stop); publishLive(k);
+  k = to; syncMovies(poses[k].stop);
   document.getElementById("ar").dataset.used = "1";
 }
 const next = () => go(k + 1), prev = () => go(k - 1);
@@ -778,21 +541,7 @@ function drawWorld(vp, st, xr, halfW, halfH, linePx) {
     const w = xr ? 0.95 : 1.15, pos = xr ? [0, 0.06, -1.25] : [0, 0.27, -1.5];
     drawQuad(M.mul(vp, M.mul(M.trans(pos[0], pos[1] + (1 - titleA) * 0.08, pos[2]), M.scale(w, w / titleTex.aspect, 1))), titleTex.t, [1, 1, 1, titleA * titleA]);
   }
-  // the QR to the audience page sits beside the title on both overviews; Q shows it large at any time
-  const qrA = qr.big ? 1 : overview;
-  if (qr.t && !window.__hideQR && qrA > 0.01) {
-    gl.useProgram(texProg); gl.bindVertexArray(quad); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
-    const s = qr.big ? (xr ? 0.5 : 0.78) : (xr ? 0.2 : 0.3);
-    const pos = qr.big ? [0, 0, xr ? -1.25 : -1.5] : (xr ? [0.62, 0.05, -1.25] : [0.82, 0.24, -1.5]);
-    drawQuad(M.mul(vp, M.mul(M.trans(pos[0], pos[1], pos[2]), M.scale(s, s, 1))), qr.t, [1, 1, 1, qrA * qrA]);
-  }
   gl.depthMask(true); gl.disable(gl.BLEND); gl.bindVertexArray(null);
-}
-function drawTimer(mvp, now) {
-  updateTimer(now);
-  gl.useProgram(texProg); gl.bindVertexArray(quad); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
-  drawQuad(mvp, timer.t, [1, 1, 1, 1]);
-  gl.disable(gl.BLEND); gl.bindVertexArray(null);
 }
 
 // ---------------------------------------------------------------- window rendering
@@ -809,7 +558,6 @@ function frameFlat(now) {
   flatView = { tanY, aspect };
   const proj = M.persp(2 * Math.atan(tanY), aspect, 0.03, 400);
   drawWorld(proj, current(now), false, w / 2, h / 2, 1.5 * dpr);
-  if (timer.on) drawTimer(M.mul(proj, M.mul(M.trans(tanY * aspect * 0.86 - 0.02, -tanY * 0.86, -1), M.scale(0.2 * tanY * 2, 0.075 * tanY * 2, 1))), now);
   requestAnimationFrame(frameFlat);
 }
 
@@ -873,7 +621,6 @@ function frameXR(now, frame) {
     gl.viewport(vp.x, vp.y, vp.width, vp.height);
     const pv = M.mul(view.projectionMatrix, view.transform.inverse.matrix);
     drawWorld(M.mul(pv, xrRoot), st, true, vp.width / 2, vp.height / 2, 2.0);
-    drawTimer(M.mul(pv, M.mul(pose.transform.matrix, M.mul(M.trans(0.2, -0.16, -1), M.scale(0.12, 0.045, 1)))), now);
   }
 }
 
@@ -885,8 +632,6 @@ window.addEventListener("keydown", e => {
   else if (key === "Home") go(0);
   else if (key === "End") go(poses.length - 1);
   else if (key === "z" || key === "Z") fit = !fit;
-  else if (key === "t" || key === "T") timer.on = !timer.on;
-  else if (key === "q" || key === "Q") qr.big = !qr.big;
   else if (key === "m" || key === "M") { muted = !muted; syncMovies(poses[k].stop); }
   else if (key === "f" || key === "F") {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -915,24 +660,11 @@ canvas.addEventListener("pointerup", e => {
 });
 canvas.addEventListener("pointercancel", () => { down = null; flatSeek = null; });
 
-publishLive(k);
 setupXR();
 requestAnimationFrame(frameFlat);
 }
 
-// ---------------------------------------------------------------- which page to open
-(async () => {
-  const hash = location.hash.slice(1);
-  let mode = hash.startsWith("stage") ? "stage" : hash === "audience" ? "audience" : null;
-  if (NTFY) { broadcastKeyOk = await checkBroadcastKey(hash).catch(() => false); if (!mode) mode = "audience"; }
-  if (!mode) {
-    const user = await Promise.race([userReady, new Promise(r => setTimeout(() => r(null), 3500))]);
-    let owner = false;
-    try { owner = (await (user && user.isOwner())) || false; } catch (e) {}
-    mode = owner ? "stage" : "audience";
-  }
-  if (mode === "stage") startStage(); else startAudience();
-})();
+startStage();
 </script>
 </body>
 </html>
