@@ -68,7 +68,7 @@
 </div>
 <script>
 "use strict";
-const SLIDES = [{"src": "deck/slides/f1.jpg", "movies": []}, {"src": "deck/slides/f7.jpg", "movies": [{"src": "deck/media/fw-otaku.mp4", "l": 0.148828, "t": 0.192209, "w": 0.333984, "h": 0.791667}, {"src": "deck/media/fw-otaku-debug.mp4", "l": 0.517188, "t": 0.192209, "w": 0.333984, "h": 0.791667}]}, {"src": "deck/slides/06.jpg", "movies": []}, {"src": "deck/slides/07.jpg", "movies": [{"src": "deck/media/claude-meetup.mp4", "l": 0.667969, "t": 0.079167, "w": 0.267188, "h": 0.844444}]}, {"src": "deck/slides/08.jpg", "movies": []}, {"src": "deck/slides/09.jpg", "movies": [{"src": "deck/media/unreal-rokid.mp4", "l": 0.060937, "t": 0.211111, "w": 0.189844, "h": 0.6}, {"src": "deck/media/unreal-mac.mp4", "l": 0.363281, "t": 0.211111, "w": 0.567969, "h": 0.6}]}, {"src": "deck/slides/10.jpg", "movies": []}, {"src": "deck/slides/11.jpg", "movies": []}, {"src": "deck/slides/12.jpg", "movies": [{"src": "deck/media/wired-iphone.mp4", "l": 0.420312, "t": 0.134722, "w": 0.253125, "h": 0.8}, {"src": "deck/media/wired-mac.mp4", "l": 0.699219, "t": 0.134722, "w": 0.253125, "h": 0.8}]}, {"src": "deck/slides/13.jpg", "movies": []}, {"src": "deck/slides/14.jpg", "movies": []}, {"src": "deck/slides/15.jpg", "movies": [{"src": "deck/media/hike-week-two.mp4", "l": 0.704688, "t": 0.236111, "w": 0.253125, "h": 0.6}]}, {"src": "deck/slides/16.jpg", "movies": [{"src": "deck/media/shiratori.mp4", "l": 0.691406, "t": 0.177778, "w": 0.2375, "h": 0.75}]}];
+const SLIDES = [{"src": "deck/slides/f1.jpg", "movies": []}, {"src": "deck/slides/f7.jpg", "movies": [{"src": "deck/media/fw-otaku.mp4", "l": 0.148828, "t": 0.192209, "w": 0.333984, "h": 0.791667}, {"src": "deck/media/fw-otaku-debug.mp4", "l": 0.517188, "t": 0.192209, "w": 0.333984, "h": 0.791667}]}, {"src": "deck/slides/06.jpg", "movies": []}, {"src": "deck/slides/07.jpg", "movies": [{"src": "deck/media/claude-meetup.mp4", "l": 0.667969, "t": 0.079167, "w": 0.267188, "h": 0.844444}]}, {"src": "deck/slides/08.jpg", "movies": []}, {"src": "deck/slides/09.jpg", "movies": [{"src": "deck/media/unreal-rokid.mp4", "l": 0.060937, "t": 0.211111, "w": 0.189844, "h": 0.6}, {"src": "deck/media/unreal-mac.mp4", "l": 0.363281, "t": 0.211111, "w": 0.567969, "h": 0.6}]}, {"src": "deck/slides/10.jpg", "movies": []}, {"src": "deck/slides/11.jpg", "movies": []}, {"src": "deck/slides/12.jpg", "movies": [{"src": "deck/media/wired-iphone.mp4", "l": 0.420312, "t": 0.134722, "w": 0.253125, "h": 0.8}, {"src": "deck/media/wired-mac.mp4", "l": 0.699219, "t": 0.134722, "w": 0.253125, "h": 0.8}]}, {"src": "deck/slides/13.jpg", "movies": []}, {"src": "deck/slides/14.jpg", "movies": []}, {"src": "deck/slides/15.jpg", "movies": [{"src": "deck/media/hike-week-two.mp4", "l": 0.704688, "t": 0.236111, "w": 0.253125, "h": 0.6}]}, {"src": "deck/slides/16.jpg", "movies": [{"src": "deck/media/shiratori.mp4", "l": 0.691406, "t": 0.177778, "w": 0.2375, "h": 0.75}]}, {"src": "deck/slides/w4a.jpg", "movies": [{"src": "deck/media/claude-tozan.mp4", "l": 0.634375, "t": 0.061111, "w": 0.28125, "h": 0.888889}]}, {"src": "deck/slides/w4b.jpg", "movies": []}, {"src": "deck/slides/w4c.jpg", "movies": [{"src": "deck/media/aura-long.mp4", "l": 0.373437, "t": 0.208333, "w": 0.579688, "h": 0.579167}]}];
 const COVER = "deck/cover.jpg";
 
 // ---------------------------------------------------------------- shared: who is viewing, and the live position
@@ -265,6 +265,27 @@ const M = {
   scale(x, y, z) { const o = M.ident(); o[0] = x; o[5] = y; o[10] = z; return o; },
   rotY(a) { const o = M.ident(), c = Math.cos(a), s = Math.sin(a); o[0] = c; o[2] = -s; o[8] = s; o[10] = c; return o; },
   rotX(a) { const o = M.ident(), c = Math.cos(a), s = Math.sin(a); o[5] = c; o[6] = s; o[9] = -s; o[10] = c; return o; },
+  invert(m) {
+    const o = new Float32Array(16),
+      a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3], a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7],
+      a20 = m[8], a21 = m[9], a22 = m[10], a23 = m[11], a30 = m[12], a31 = m[13], a32 = m[14], a33 = m[15],
+      b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11,
+      b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30,
+      b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+    const det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    if (!det) return null;
+    const d = 1 / det;
+    o[0] = (a11 * b11 - a12 * b10 + a13 * b09) * d; o[1] = (a02 * b10 - a01 * b11 - a03 * b09) * d;
+    o[2] = (a31 * b05 - a32 * b04 + a33 * b03) * d; o[3] = (a22 * b04 - a21 * b05 - a23 * b03) * d;
+    o[4] = (a12 * b08 - a10 * b11 - a13 * b07) * d; o[5] = (a00 * b11 - a02 * b08 + a03 * b07) * d;
+    o[6] = (a32 * b02 - a30 * b05 - a33 * b01) * d; o[7] = (a20 * b05 - a22 * b02 + a23 * b01) * d;
+    o[8] = (a10 * b10 - a11 * b08 + a13 * b06) * d; o[9] = (a01 * b08 - a00 * b10 - a03 * b06) * d;
+    o[10] = (a30 * b04 - a31 * b02 + a33 * b00) * d; o[11] = (a21 * b02 - a20 * b04 - a23 * b00) * d;
+    o[12] = (a11 * b07 - a10 * b09 - a12 * b06) * d; o[13] = (a00 * b09 - a01 * b07 + a02 * b06) * d;
+    o[14] = (a31 * b01 - a30 * b03 - a32 * b00) * d; o[15] = (a20 * b03 - a21 * b01 + a22 * b00) * d;
+    return o;
+  },
+  apply(m, v, w) { return [m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*w, m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*w, m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*w]; },
   persp(fovY, aspect, n, f) {
     const t = 1 / Math.tan(fovY / 2), o = new Float32Array(16);
     o[0] = t / aspect; o[5] = t; o[10] = (f + n) / (n - f); o[11] = -1; o[14] = 2 * f * n / (n - f);
@@ -292,7 +313,12 @@ function ground(x, z) {
 }
 //            x     z     altitude (sky boards only)
 const SPOTS = [[0, 0], [3.5, -6.5], [-2, -15], [2.5, -21.5], [-3, -31], [1, -37.5], [5, -44],
-               [0, -56, 9], [-5, -64, 10.5], [-3, -78], [4, -87], [-4, -95], [0.5, -103]];
+               [0, -56, 9], [-5, -64, 10.5]];
+// 山の区間は、残りのスライドを山頂へ向かって巻きながら並べる
+for (let i = 0, n = SLIDES.length - SPOTS.length; i < n; i++) {
+  const r = 2.6 + 23.4 * Math.pow(1 - i / Math.max(1, n - 1), 1.15), th = -0.12 + i * 0.86;
+  SPOTS.push([MT.x + r * Math.sin(th), MT.z + r * Math.cos(th)]);
+}
 const boards = SPOTS.map((s, i) => {
   const sky = s.length > 2, base = sky ? s[2] : ground(s[0], s[1]);
   return { c: [s[0], base + EYE, s[1]], base, sky };
@@ -589,6 +615,7 @@ function tex(source, mip) {
   if (mip && an) gl.texParameterf(gl.TEXTURE_2D, an.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(an.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
   return t;
 }
+const WHITE = (() => { const t = tex(null, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255])); return t; })();
 const BLANK = tex(null, false), BLACK = (() => { const t = tex(null, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255])); return t; })();
 
 const slides = SLIDES.map(s => ({ tex: null, movies: s.movies.map(m => ({ ...m, el: null, tex: null, ready: false })) }));
@@ -618,7 +645,7 @@ const qr = { t: null, big: false };
 { const img = new Image(); img.onload = () => { qr.t = tex(img, true); }; img.src = "deck/qr.png"; }
 const timer = (() => {
   const c = document.createElement("canvas"); c.width = 256; c.height = 96;
-  return { c, g: c.getContext("2d"), t: tex(c, false), shown: "", start: 0, on: false };
+  return { c, g: c.getContext("2d"), t: tex(c, false), shown: "", start: 0, on: true };
 })();
 function updateTimer(now) {
   const left = timer.start ? TALK_SECONDS - (now - timer.start) / 1000 : TALK_SECONDS;
@@ -647,6 +674,33 @@ function syncMovies(stop) {
     else { m.el.muted = true; if (!m.el.paused) m.el.pause(); }
   }));
 }
+
+// ---------------------------------------------------------------- scrubbing the movie on the current board
+const BAR = { width: 0.9, lift: 0.03, zone: 0.17 };
+let activeBoard = null, flatView = { tanY: 0.4, aspect: 16 / 9 };
+function movieRect(m) { return { rw: m.w * W, rh: m.h * H, cx: (m.l + m.w / 2 - 0.5) * W, cy: (0.5 - m.t - m.h / 2) * H }; }
+function boardPoint(origin, dir) {            // where a ray (in the reference space) meets the current board, in board metres
+  if (!activeBoard || !activeBoard.inv) return null;
+  const o = M.apply(activeBoard.inv, origin, 1), d = M.apply(activeBoard.inv, dir, 0);
+  if (Math.abs(d[2]) < 1e-6) return null;
+  const t = -o[2] / d[2];
+  return t > 0 ? [o[0] + d[0] * t, o[1] + d[1] * t] : null;
+}
+function hitMovie(origin, dir) {
+  const p = boardPoint(origin, dir); if (!p) return null;
+  for (const m of slides[activeBoard.i].movies) {
+    const r = movieRect(m);
+    if (Math.abs(p[0] - r.cx) <= r.rw / 2 && Math.abs(p[1] - r.cy) <= r.rh / 2) return { m, bar: p[1] < r.cy - r.rh / 2 + r.rh * BAR.zone };
+  }
+  return null;
+}
+function seekTo(m, origin, dir) {
+  const p = boardPoint(origin, dir); if (!p || !m.el || !m.el.duration) return;
+  const r = movieRect(m), bw = r.rw * BAR.width;
+  m.el.currentTime = Math.max(0, Math.min(1, (p[0] - (r.cx - bw / 2)) / bw)) * m.el.duration;
+}
+function togglePlay(m) { if (!m.el) return; if (m.el.paused) m.el.play().catch(() => {}); else m.el.pause(); }
+const flatRay = e => [(e.clientX / canvas.clientWidth * 2 - 1) * flatView.tanY * flatView.aspect, (1 - e.clientY / canvas.clientHeight * 2) * flatView.tanY, -1];
 
 // ---------------------------------------------------------------- navigation
 let k = 0, tween = null, fit = false;          // k indexes poses[]
@@ -683,9 +737,14 @@ function drawWorld(vp, st, xr, halfW, halfH, linePx) {
 
   gl.useProgram(texProg); gl.activeTexture(gl.TEXTURE0); gl.bindVertexArray(quad);
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  activeBoard = null;
   boards.forEach((b, i) => {
     const s = slides[i], w = weight(i), br = Math.max(0.3 + 0.7 * w, 0.8 * overview);
     const at = M.mul(world, b.model);
+    if (w > 0.97 && s.movies.length) {      // 動画の操作用に、基準の空間から看板の面への変換を覚えておく
+      const toRef = M.mul(poseMatrix(st.q, xr), b.model);
+      activeBoard = { i, inv: M.invert(xr ? M.mul(xrRoot, toRef) : toRef) };
+    }
     drawQuad(M.mul(at, M.scale(W, H, 1)), s.tex || BLANK, [br, br, br, 1]);
     if (w < 0.5) return;
     for (const m of s.movies) {
@@ -698,6 +757,12 @@ function drawWorld(vp, st, xr, halfW, halfH, linePx) {
       let vw = rw, vh = rw / ar; if (vh > rh) { vh = rh; vw = rh * ar; }
       drawQuad(M.mul(at, M.mul(M.trans(cx, cy, 0.003), M.scale(rw, rh, 1))), BLACK, [1, 1, 1, 1]);
       drawQuad(M.mul(at, M.mul(M.trans(cx, cy, 0.006), M.scale(vw, vh, 1))), m.tex, [br, br, br, 1]);
+      if (w > 0.97 && v.duration) {          // シークバー
+        const bw = rw * BAR.width, by = cy - rh / 2 + BAR.lift, p = Math.min(1, v.currentTime / v.duration);
+        drawQuad(M.mul(at, M.mul(M.trans(cx, by, 0.009), M.scale(bw, 0.007, 1))), WHITE, [0.42, 0.42, 0.42, 1]);
+        if (p > 0) drawQuad(M.mul(at, M.mul(M.trans(cx - bw / 2 + bw * p / 2, by, 0.010), M.scale(bw * p, 0.007, 1))), WHITE, [0.65, 0.93, 0.47, 1]);
+        drawQuad(M.mul(at, M.mul(M.trans(cx - bw / 2 + bw * p, by, 0.011), M.scale(0.024, 0.024, 1))), WHITE, [0.65, 0.93, 0.47, 1]);
+      }
     }
   });
 
@@ -741,6 +806,7 @@ function frameFlat(now) {
   gl.clearColor(0.016, 0.03, 0.026, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const aspect = w / h, fill = fit ? 0.97 : 0.66;
   const tanY = Math.max((H / 2) / (fill * VIEW_D), (W / 2) / (0.94 * VIEW_D * aspect));
+  flatView = { tanY, aspect };
   const proj = M.persp(2 * Math.atan(tanY), aspect, 0.03, 400);
   drawWorld(proj, current(now), false, w / 2, h / 2, 1.5 * dpr);
   if (timer.on) drawTimer(M.mul(proj, M.mul(M.trans(tanY * aspect * 0.86 - 0.02, -tanY * 0.86, -1), M.scale(0.2 * tanY * 2, 0.075 * tanY * 2, 1))), now);
@@ -748,7 +814,7 @@ function frameFlat(now) {
 }
 
 // ---------------------------------------------------------------- WebXR
-let xrSession = null, xrSpace = null, xrRoot = null, wantRecenter = true;
+let xrSession = null, xrSpace = null, xrRoot = null, wantRecenter = true, xrSeek = null, xrConsumed = false;
 const arButton = document.getElementById("ar");
 async function setupXR() {
   if (!navigator.xr) return;
@@ -764,7 +830,18 @@ async function setupXR() {
       const session = await navigator.xr.requestSession(mode, { optionalFeatures: ["hand-tracking"] });
       session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl), depthNear: 0.03, depthFar: 400 });
       xrSpace = await session.requestReferenceSpace("local");
-      session.addEventListener("select", e => (e.inputSource && e.inputSource.handedness === "left") ? prev() : next());
+      const xrRay = (frame, source) => {
+        const pose = frame && source && frame.getPose(source.targetRaySpace, xrSpace); if (!pose) return null;
+        const m = pose.transform.matrix; return { o: [m[12], m[13], m[14]], d: [-m[8], -m[9], -m[10]] };
+      };
+      session.addEventListener("selectstart", e => {       // 動画を指してつまむ: 下端はシーク、それ以外は再生・一時停止
+        const ray = xrRay(e.frame, e.inputSource), hit = ray && hitMovie(ray.o, ray.d);
+        if (!hit) return;
+        xrConsumed = true;
+        if (hit.bar) { xrSeek = { source: e.inputSource, m: hit.m, ray: xrRay }; seekTo(hit.m, ray.o, ray.d); } else togglePlay(hit.m);
+      });
+      session.addEventListener("selectend", () => { xrSeek = null; setTimeout(() => { xrConsumed = false; }, 0); });
+      session.addEventListener("select", e => { if (xrConsumed) return; (e.inputSource && e.inputSource.handedness === "left") ? prev() : next(); });
       session.addEventListener("squeeze", () => { wantRecenter = true; });
       session.addEventListener("end", () => { xrSession = null; arButton.style.display = "block"; requestAnimationFrame(frameFlat); });
       xrSession = session; wantRecenter = true; arButton.style.display = "none";
@@ -787,6 +864,7 @@ function frameXR(now, frame) {
     wantRecenter = false;
   }
   buildLive(now / 1000);
+  if (xrSeek) { const ray = xrSeek.ray(frame, xrSeek.source); if (ray) seekTo(xrSeek.m, ray.o, ray.d); }
   const st = current(now), layer = session.renderState.baseLayer;
   gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
   gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -815,16 +893,27 @@ window.addEventListener("keydown", e => {
     else document.documentElement.requestFullscreen().catch(() => {});
   }
 });
-let down = null;
-canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
+let down = null, flatSeek = null;
+canvas.addEventListener("pointerdown", e => {
+  const hit = hitMovie([0, 0, 0], flatRay(e));
+  if (hit) {                                  // 動画の上: 下端はシーク、それ以外は再生・一時停止
+    down = null;
+    if (hit.bar) { flatSeek = hit.m; seekTo(hit.m, [0, 0, 0], flatRay(e)); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} }
+    else togglePlay(hit.m);
+    return;
+  }
+  down = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener("pointermove", e => { if (flatSeek) seekTo(flatSeek, [0, 0, 0], flatRay(e)); });
 canvas.addEventListener("pointerup", e => {
+  if (flatSeek) { flatSeek = null; return; }
   if (!down) return;
   const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); return; }
   if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
   e.clientX < canvas.clientWidth * 0.3 ? prev() : next();
 });
-canvas.addEventListener("pointercancel", () => { down = null; });
+canvas.addEventListener("pointercancel", () => { down = null; flatSeek = null; });
 
 publishLive(k);
 setupXR();
