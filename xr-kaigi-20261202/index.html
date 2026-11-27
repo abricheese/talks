@@ -38,13 +38,45 @@ nav { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; padding: 8p
 button { font: 700 15px var(--font); color: var(--ink); background: rgba(255,255,255,.07); border: 1px solid rgba(127,227,196,.3); border-radius: 14px; padding: 13px 8px; }
 #follow[aria-pressed="true"] { background: var(--teal); color: #052019; border-color: var(--teal); }
 #prev, #next { font-size: 22px; padding: 8px; }
+/* 3Dモード：カードの代わりにプレゼンの空間を自分で回して見る */
+#main { position: relative; min-height: 0; display: grid; }
+#main > * { grid-area: 1 / 1; }
+#view3d { display: none; position: relative; min-height: 0; overflow: hidden; border-radius: 18px; margin: 4px 10px; }
+#view3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.is3d #view3d { display: block; } .is3d #card { visibility: hidden; pointer-events: none; }
+.hint3d { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 12px; color: var(--sub); pointer-events: none; display: none; }
+.is3d .hint3d { display: block; }
+header .tools { display: flex; gap: 6px; align-items: center; }
+header button { padding: 7px 11px; font-size: 13px; border-radius: 999px; }
+#xr { display: none; } .is3d #xr:not([hidden]) { display: inline-block; }
+/* 録画の再体験 */
+#rbar { display: none; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 4px 16px 6px; }
+.replaying #rbar { display: grid; }
+#seek { width: 100%; accent-color: var(--teal); }
+#time { font-size: 13px; color: var(--sub); font-variant-numeric: tabular-nums; }
+.replay #follow { display: none; } .replay .bar { grid-template-columns: 1fr 1fr; }
+.replay #mode3d { display: none; }
+#pick { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; text-align: center; padding: 24px; background: rgba(6,10,16,.92); z-index: 3; }
+#pick[hidden] { display: none; }
+#pick label { display: inline-block; padding: 14px 20px; border-radius: 14px; background: var(--teal); color: #052019; font-weight: 800; cursor: pointer; }
+#pick input { display: none; }
+#pickmsg { color: var(--warm); min-height: 1.4em; }
 @media (orientation: landscape) and (max-height: 520px) { .card h1 { font-size: 28px; } .card li { font-size: 17px; padding: 8px 12px; } }
 </style>
 </head>
 <body>
-<header><span>XR Kaigi 2026</span><span id="tag"></span></header>
-<section id="card" aria-live="polite"></section>
+<header><span>XR Kaigi 2026</span><span class="tools"><button id="xr" hidden>空間で見る</button><button id="mode3d" hidden>3Dで見る</button><span id="tag"></span></span></header>
+<div id="main">
+  <section id="card" aria-live="polite"></section>
+  <section id="view3d" aria-label="プレゼンの空間"><div class="hint3d">ドラッグで回る・2本指で寄る・ダブルタップで元の位置</div></section>
+  <div id="pick" hidden>
+    <p>録画の動画（.webm）と記録（.json）を<wbr>2つ一緒に選ぶと、<wbr>空間の中で再生します。</p>
+    <p><label>録画を選ぶ<input id="pickfile" type="file" multiple accept=".webm,.mp4,.json,video/*,application/json"></label></p>
+    <p id="pickmsg"></p>
+  </div>
+</div>
 <div>
+  <div id="rbar"><button id="play">▶ 再生</button><input id="seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="再生位置"><span id="time">0:00</span></div>
   <nav><button id="prev" aria-label="前へ">‹</button><div id="pos"></div><button id="next" aria-label="次へ">›</button></nav>
   <div class="bar"><button id="follow" aria-pressed="true">発表者に追従中</button><button id="save">画像を保存</button><button id="post">Xに投稿</button></div>
 </div>
