@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XR Kaigi Aura</title>
+<style>
+:root { --ink:#eef7f5; --sub:#9db3b8; --teal:#7fe3c4; --warm:#ffc46b;
+  --font: "Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP",sans-serif; }
+html, body { margin: 0; height: 100%; background: #070c12; color: var(--ink); font-family: var(--font); overflow: hidden; }
+#view, #view canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#ui { position: fixed; left: 16px; top: 16px; width: min(460px, calc(100% - 32px)); padding: 14px 18px;
+  background: rgba(6,14,20,.82); border: 1px solid rgba(127,227,196,.35); border-radius: 22px; backdrop-filter: blur(8px); }
+#ui h1 { margin: 0 0 4px; font-size: 18px; color: var(--teal); letter-spacing: .06em; }
+#page { font-size: 16px; font-weight: 800; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#enter { width: 100%; font: 800 24px var(--font); padding: 14px; border-radius: 16px; border: 0; background: var(--teal); color: #052019; cursor: pointer; }
+#enter:disabled { background: #2b3b40; color: var(--sub); cursor: default; }
+#why { color: var(--warm); font-size: 15px; margin-top: 8px; min-height: 1em; }
+#link { color: var(--sub); font-size: 14px; margin-top: 6px; } #link[data-ok="1"] { color: var(--teal); }
+.help { color: var(--sub); font-size: 13px; margin-top: 8px; line-height: 1.6; }
+.in-xr #ui { display: none; }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="ui">
+  <h1>Aura 発表者ビュー</h1>
+  <div id="page"></div>
+  <button id="enter">空間で開く</button>
+  <div id="why"></div>
+  <div id="link"></div>
+  <div class="help">右手でつまむ：次へ　左手でつまむ：前へ　上のカードを指してつまむ：そのページへ　握る：正面を置き直す<br>この画面ではドラッグで見回せます（矢印キーでページ送り）</div>
+</div>
+<script src="content.js" charset="utf-8"></script>
+<script src="build/aura.js" charset="utf-8"></script>
+</body>
+</html>
