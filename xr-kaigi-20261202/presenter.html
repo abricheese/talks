@@ -13,6 +13,7 @@ body { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 
 header, main, footer { min-width: 0; }
 button { font: inherit; color: inherit; background: #15262f; border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
 button:hover { border-color: var(--teal); }
+#person-adj { display: inline-flex; gap: 4px; align-items: center; color: var(--sub); font-size: 13px; } #person-adj[hidden] { display: none; } #person-adj button { padding: 4px 9px; }
 button.primary { background: var(--teal); color: #052019; border-color: var(--teal); font-weight: 800; }
 button[aria-pressed="false"] { opacity: .65; }
 
@@ -97,6 +98,7 @@ footer { border-top: 1px solid var(--line); }
       <button data-act="mirror"></button>
       <button data-act="cam"></button>
       <select id="cam-select" aria-label="カメラ"></select>
+      <span id="person-adj" hidden>姿の位置：<button data-act="pa-left">←</button><button data-act="pa-right">→</button><button data-act="pa-up">↑</button><button data-act="pa-down">↓</button><button data-act="pa-big">大</button><button data-act="pa-small">小</button><button data-act="pa-reset">戻す</button></span>
     </div>
     <div class="status">
       <span id="st-proj"></span><span id="st-aura"></span><span id="st-sync"></span><span id="st-x"></span><span id="st-cam"></span>
