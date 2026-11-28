@@ -20,7 +20,7 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .card.in-next { animation: inNext .55s cubic-bezier(.2,.8,.2,1); } .card.in-prev { animation: inPrev .55s cubic-bezier(.2,.8,.2,1); }
 @keyframes inNext { from { transform: translateX(40%) rotateY(-40deg); opacity: 0; } }
 @keyframes inPrev { from { transform: translateX(-40%) rotateY(40deg); opacity: 0; } }
-.card .no { position: absolute; right: 18px; top: -10px; font-size: clamp(80px, 22vw, 180px); font-weight: 900; color: transparent; -webkit-text-stroke: 2px rgba(127,227,196,.28); transform: translateZ(-40px); pointer-events: none; }
+
 .card .event { color: var(--teal); font-weight: 800; letter-spacing: .1em; margin-bottom: 10px; }
 .card h1 { word-break: auto-phrase; text-wrap: balance; margin: 0 0 18px; font-size: clamp(26px, 7vw, 54px); line-height: 1.25; font-weight: 900; transform: translateZ(30px); position: relative; }
 .card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; transform: translateZ(50px); }

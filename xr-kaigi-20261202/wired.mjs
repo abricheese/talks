@@ -9,7 +9,7 @@
 //
 // 環境変数
 //   X_BEARER_TOKEN   X API の Bearer Token（なければ X欄は出ない）
-//   X_QUERY          検索条件（既定：#XRKaigi -is:retweet）
+//   X_QUERY          検索条件（既定：#XRKaigi #XRm鹿児島 -is:retweet　＝両方を含む投稿だけ）
 //   X_INTERVAL       Xに問い合わせる間隔（秒、既定 15）
 //   X_MAX_POSTS      読み取る投稿数の上限（既定 1500。超えたら止める＝費用の上限）
 //
@@ -21,7 +21,7 @@ import { pathToFileURL } from "node:url";
 
 export const port = Number(process.env.PORT || 8787);
 const token = process.env.X_BEARER_TOKEN || "";
-const query = process.env.X_QUERY || "#XRKaigi -is:retweet";
+const query = process.env.X_QUERY || "#XRKaigi #XRm鹿児島 -is:retweet";   // 2つを両方含む投稿だけ（この講演の実況だけを拾う）
 const interval = Number(process.env.X_INTERVAL || 15) * 1000;
 const maxPosts = Number(process.env.X_MAX_POSTS || 1500);
 const mock = process.env.X_MOCK === "1";
@@ -71,7 +71,7 @@ let mockN = 0;
 function addMock() {
   if (Math.random() < 0.5) return;
   mockN++;
-  posts.push({ id: String(Date.now()) + mockN, name: "テスト" + mockN, user: "test" + mockN, icon: "", text: `（テスト投稿 ${mockN}） #XRKaigi`, image: "" });
+  posts.push({ id: String(Date.now()) + mockN, name: "テスト" + mockN, user: "test" + mockN, icon: "", text: `（テスト投稿 ${mockN}） #XRKaigi #XRm鹿児島`, image: "" });
   newest = posts[posts.length - 1].id;
 }
 

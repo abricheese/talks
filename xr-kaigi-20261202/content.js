@@ -7,18 +7,21 @@
 //   photo   … 台本の「写真など」。発表者の手元とAuraにだけ出す（投影しない）
 //   photos  … 実際に使う写真のファイル。許可が取れたら入れる（今は空）。許可待ちのものは content.local.js（公開しない）に書く
 //   big     … 大きく出す「内容」の番号（0から）
+//   no      … 台本の管理番号。人には見せない（発表者の手元でも通し番号を出す）
+//   hideTitle … true なら見出しを人に見せない（「自己紹介」「締め：」など作業用の見出し）
 //   kind    … cover 表紙 / loop ループ図 / shots スクショを大きく並べる（見出しと札は出さない）
 //   talk    … 台本の「話す内容」。段落ごと
 //   pending … 台本で未確定のところ。発表者の手元にだけ出す
 window.DECK = {
   title: "地方も企業も ‐XRコミュニティを続ける工夫と生まれた変化‐",
   event: "XR Kaigi 2026",
-  hashtag: "XRKaigi",                 // 先頭の # は付けない
+  // この講演だけを拾うため、2つを両方つけてもらう（X投稿欄も両方を含む投稿だけ出す）。先頭の # は付けない
+  hashtags: ["XRKaigi", "XRm鹿児島"],
   talkMinutes: 11,                    // 台本の目安（11分前後）。中村さんとの持ち時間が決まったら変える
 
   // 参加者に配るページ（公開したときの住所）。QRとX投稿のURLに使う。
   publicUrl: "https://abricheese.github.io/talks/xr-kaigi-20261202/",
-  qrTarget: "post",                   // "post": ハッシュタグ入りのX投稿画面 / "page": 参加者ページ
+  qrTarget: "post",                   // "post": ハッシュタグだけ入ったX投稿画面 / "page": 参加者ページ
 
   // ページ同期（ntfy.sh）。送れるのは発表者キーを知っている端末だけ。
   ntfy: "https://ntfy.sh/abchee-xrk26-7q3vd9",
@@ -44,7 +47,7 @@ window.DECK = {
       talk: ["（表紙。ここから自己紹介へ）"],
     },
     {
-      id: "p02", no: "02",
+      id: "p02", no: "02", hideTitle: true,
       title: "自己紹介",
       screen: ["あぶち（@abricheese）", "ノンゲームXRエンジニア＠鹿児島", "XR Meetup Kagoshima 共同代表"],
       photo: "本人の写真か普段のアイコンを1点",
@@ -52,7 +55,7 @@ window.DECK = {
       talk: ["あぶちです。鹿児島でノンゲームのXRエンジニアをしています。今日は、XR Meetup Kagoshimaを始めたきっかけと、体験する会から作る人が集まる場になっていった話をします。"],
     },
     {
-      id: "p021", no: "02.1",
+      id: "p021", no: "02.1", hideTitle: true,
       title: "XR Kaigi AWARD 2025 受賞",
       screen: ["XR Kaigi AWARD 2025 アクティビティ部門 最優秀賞", "Iwaken Lab.さんと一緒に受賞"],
       photo: "12/17の資料p.3の受賞のページ。授賞式の写真があれば添える",
@@ -239,7 +242,7 @@ window.DECK = {
       ],
     },
     {
-      id: "p165", no: "16.5", kind: "shots",
+      id: "p165", no: "16.5", hideTitle: true, kind: "shots",
       title: "イワケンさんとじゅんさんのポスト",
       screen: [],
       photo: "2人のXのポストのスクショ（2026/11/27）。載せてよいか2人に確認",
@@ -248,7 +251,7 @@ window.DECK = {
       talk: ["こういった活動を経て、こんなことを言ってもらえるようになりました。すごく嬉しかったです。"],
     },
     {
-      id: "p17", no: "17",
+      id: "p17", no: "17", hideTitle: true,
       title: "締め：続けるために大事にしている3つ",
       screen: ["自分がまず楽しむ", "好きなことに熱狂する", "仲間を増やす、支えてもらう"],
       photo: "02.2と同じ並び",
