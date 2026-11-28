@@ -243,7 +243,7 @@ window.DECK = {
       title: "イワケンさんとじゅんさんのポスト",
       screen: [],
       photo: "2人のXのポストのスクショ（2026/11/27）。載せてよいか2人に確認",
-      photos: [],                       // 掲載の許可が取れるまで公開側は空。手元の Mac では content.local.js が入れる
+      photos: [{ src: "img/iwaken-post.jpg" }, { src: "img/jun-quote.jpg" }],
       photoSlots: 2,                    // 写真がないときに出す仮の枠の数
       talk: ["こういった活動を経て、こんなことを言ってもらえるようになりました。すごく嬉しかったです。"],
     },

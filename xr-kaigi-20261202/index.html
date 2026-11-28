@@ -27,6 +27,8 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .card li { padding: 12px 16px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(127,227,196,.25); font-size: clamp(16px, 4.4vw, 26px); line-height: 1.45; font-weight: 700; }
 .kind-cover li { display: inline-block; margin-right: 8px; color: var(--warm); border-color: rgba(255,196,107,.5); border-radius: 999px; }
 .kind-cover ul { display: block; }
+.card .photos { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; transform: translateZ(40px); }
+.card .photos img { flex: 1 1 260px; min-width: 0; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(127,227,196,.35); }
 .card .diagram { color: var(--sub); font-size: 14px; text-align: center; margin: 8px 0 0; }
 svg.loop { width: min(100%, 520px); display: block; margin: 16px auto 0; overflow: visible; }
 .loop .ring { fill: none; stroke: rgba(127,227,196,.6); stroke-width: 1.2; }
