@@ -41,7 +41,7 @@ window.DECK = {
     {
       id: "p01", no: "01", kind: "cover",
       title: "地方も企業も ‐XRコミュニティを続ける工夫と生まれた変化‐",
-      screen: ["あぶち", "中村匠"],
+      screen: ["あぶち（東幸樹）", "Takumi-san@3Dcamera（中村匠）"],
       photo: "なし。自分のPCで出す表紙",
       photos: [],
       talk: ["（表紙。ここから自己紹介へ）"],
