@@ -29,11 +29,18 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .kind-cover ul { display: block; }
 .card .photos { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; transform: translateZ(40px); }
 .card .photos img { flex: 1 1 260px; min-width: 0; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(127,227,196,.35); }
+.card .photos.many img { flex-basis: 140px; }
+@media (max-width: 699px) {
+  .card .photos.many { display: grid; grid-template-columns: repeat(var(--c), 1fr); gap: 8px; }
+  .card .photos.many.hero img:first-child { grid-column: 1 / -1; }
+  .card svg.loop:has(~ .photos) { width: min(100%, 420px); margin-top: 6px; }
+  .card .photos { margin-top: 12px; }
+}
 .card .diagram { color: var(--sub); font-size: 14px; text-align: center; margin: 8px 0 0; }
-svg.loop { width: min(100%, 520px); display: block; margin: 16px auto 0; overflow: visible; }
+svg.loop { width: min(100%, 640px); display: block; margin: 16px auto 0; overflow: visible; }
 .loop .ring { fill: none; stroke: rgba(127,227,196,.6); stroke-width: 1.2; }
 .loop .dot { fill: #3b5560; } .loop .dot.on { fill: var(--warm); }
-.loop text { font-size: 7px; fill: var(--sub); font-weight: 700; } .loop text.on { fill: var(--warm); }
+.loop text { font-size: 10px; fill: var(--sub); font-weight: 700; } .loop text.on { fill: var(--warm); }
 nav { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; padding: 8px 16px; align-items: center; }
 #pos { text-align: center; color: var(--sub); font-size: 14px; }
 .bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 16px max(14px, env(safe-area-inset-bottom)); }
