@@ -58,22 +58,24 @@ X_BEARER_TOKEN=xxxx node xr-kaigi-20261202/server.mjs
 
 ## Aura を Mac に有線でつなぐ（ネットが不調でも Aura で操作する）
 
-Aura のつまみ操作は、ネット（WebRTC と ntfy）と有線（Mac の server.mjs）の両方で Mac に届く。
-片方が落ちてももう片方で動く。有線だけでも、発表者画面・投影・Aura のページ位置、時間、Aura の頭と手（ミラーと押しのけ）が届く。
+Aura のつまみ操作は、ネット（WebRTC と ntfy）と有線（Mac の中継）の両方で Mac に届く。片方が落ちてももう片方で動く。
+GitHub Pages の発表者画面と aura.html のまま使える（localhost のページを開き直す必要はない）。
 
 準備（1回だけ）
-1. Mac に adb を入れる（例：`brew install --cask android-platform-tools`）。
+1. Mac に Node.js（18以降）と adb（`brew install --cask android-platform-tools`）を入れる。
 2. Aura の設定で開発者向けオプションと USB デバッグを有効にする。
 
 当日
-1. Mac で server.mjs を起動したあと、Aura を USB-C で Mac につなぎ、Aura 側で「USB デバッグを許可」。
-2. Mac のターミナルで `adb reverse tcp:8787 tcp:8787`（つなぎ直したら毎回）。
-3. Aura の Chrome で `http://localhost:8787/xr-kaigi-20261202/aura.html` を開き「空間で開く」。
-   localhost なので空間表示（WebXR）がそのまま使える。
-4. 発表者画面の状態が「Aura：有線でつながっています」（ネットもあれば「ネットと有線で」）になれば OK。
+1. Mac のターミナルで
+   `curl -fsSL https://abricheese.github.io/talks/xr-kaigi-20261202/wired.mjs -o ~/xrk-wired.mjs && node ~/xrk-wired.mjs`
+   （2回目からは `node ~/xrk-wired.mjs`）。adb reverse は中継が数秒ごとに自動でかける。
+2. Aura を USB-C で Mac につなぎ、Aura 側で「USB デバッグを許可」。
+3. 発表者画面と aura.html を開く。Chrome が「このデバイス上の他のアプリやサービスへのアクセス」を聞いたら許可（Mac と Aura の両方）。
+4. 発表者画面が「Aura：有線でつながっています」（ネットもあれば「ネットと有線で」）になれば OK。
 
+- 中継（wired.mjs）は Mac の 127.0.0.1:8787 だけで待ち受け、abricheese.github.io と localhost のページからしか読み書きできない。
+- server.mjs も同じ中継を持つので、ネットが全くない時（下）は server.mjs だけ動かせばよい。
 - Aura がネットに出られないときは、Aura で送ったページを Mac が代わりに参加者へ配信する（Mac がネットにつながっていれば）。
-- 公開URLの aura.html で開いたときはネットだけを使う。有線を使うときは必ず localhost の方で開く。
 
 ## ネットがない時
 
